@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- AirwayGuard v2.1 / 2026-03-11 — ASA 2022 準拠改善（既往・頸部可動域・誤嚥リスク・Plan D文言・説明追記） -->
+<!-- AirwayGuard v2.1 / 2026-03-12 — 最終ページ「利用規約・ご案内」追加（利用規約・参照ガイドライン・D.A.M QRコード表示） -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -783,6 +783,17 @@ body.dial-open{ height:100vh; overflow:hidden; }
 }
 .inline-notice strong{color:var(--blue);}
 
+/* 利用規約・ご案内ページ用 */
+.readme-qr{
+  display:block;
+  margin:12px auto;
+  max-width:180px;
+  height:auto;
+  border-radius:var(--r-sm);
+  border:1px solid var(--border);
+}
+.readme-section{margin-bottom:14px;}
+
 .tag-inline{
   display:inline-block;
   font-size:10px;
@@ -1083,6 +1094,10 @@ input[data-key="spo2"].crit-val{color:var(--red)!important;}
     <div class="step-item" data-step="4">
       <div class="step-num">5</div>
       <div class="step-label">確認・申送</div>
+    </div>
+    <div class="step-item" data-step="5">
+      <div class="step-num">6</div>
+      <div class="step-label">利用規約</div>
     </div>
   </div>
 
@@ -1689,7 +1704,55 @@ input[data-key="spo2"].crit-val{color:var(--red)!important;}
     </div>
     <div class="bottom-bar">
       <button class="btn btn-ghost" onclick="goStep(3)">← Plan</button>
+      <button class="btn btn-ghost" onclick="goStep(5)">利用規約・ご案内</button>
       <button class="btn btn-red" style="flex:1" onclick="resetAll()">🔄 新しい症例</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════
+       PANEL 5 : 利用規約・ご案内
+  ════════════════════════════ -->
+  <div class="panel" id="panel-5">
+    <div class="panel-body">
+      <div class="card">
+        <div class="card-header">
+          <div class="dot" style="background:var(--blue)"></div>
+          利用規約
+        </div>
+        <div class="card-body readme-section">
+          <p><strong>本アプリ（AirwayGuard）は勉強会・シミュレーション用の教育ツールです。</strong></p>
+          <ul style="margin:8px 0 0 14px;padding:0;">
+            <li>医療機器ではありません。</li>
+            <li>診断・治療・予防の決定は行いません。</li>
+            <li>救急隊との勉強会などで、入力内容の記録・整理・共有の<strong>練習</strong>にご利用ください。</li>
+            <li>臨床判断は医療従事者が行います。本アプリの表示内容をそのまま診療行為の根拠としないでください。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="dot" style="background:var(--green)"></div>
+          参照ガイドライン・バージョン
+        </div>
+        <div class="card-body readme-section">
+          <p>リスク項目・レベル分けと Plan A〜D の対応は、<strong>ASA 2022 Practice Guidelines for Management of the Difficult Airway</strong> の評価項目と戦略の考え方を参考にしつつ、搬送前シミュレーション用に簡略化しています。抜管戦略は対象外です。</p>
+          <p style="margin-top:8px;font-size:12px;color:var(--t3);">AirwayGuard v2.1（教育用気道シミュレーター）</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="dot" style="background:var(--t2)"></div>
+          連絡・情報（D.A.M）
+        </div>
+        <div class="card-body readme-section" style="text-align:center;">
+          <p style="font-size:12px;color:var(--t2);margin-bottom:8px;">以下のQRコードで関連情報へアクセスできます。</p>
+          <img src="QR_245351.png" alt="D.A.M 連絡用QRコード" class="readme-qr" width="180" height="180">
+          <p style="font-size:11px;color:var(--t3);">D.A.M</p>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <button class="btn btn-ghost" onclick="goStep(4)">← 確認・申送に戻る</button>
     </div>
   </div>
 
