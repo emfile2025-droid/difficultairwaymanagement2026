@@ -4,7 +4,9 @@ const CACHE_NAME = 'airway-guard-v1';
 const URLS = [
   './',
   './index.html',
-  './manifest.json'
+  './airway_guard_v2_1.html',
+  './manifest.json',
+  './apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (e) => {
