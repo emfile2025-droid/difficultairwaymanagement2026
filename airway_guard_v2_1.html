@@ -1,0 +1,2767 @@
+<!DOCTYPE html>
+<!-- AirwayGuard v2.1 / 2026-03-11 — ASA 2022 準拠改善（既往・頸部可動域・誤嚥リスク・Plan D文言・説明追記） -->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0069c2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<title>AirwayGuard v2.1 - 気道シミュレーター（勉強会・教育用）</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:       #eef3f9;
+  --surface:  #ffffff;
+  --s2:       #f0f5fb;
+  --s3:       #e2ecf7;
+  --border:   #c8daf0;
+  --b2:       #a8c4e0;
+  --text:     #0f1e2e;
+  --t2:       #3d5a74;
+  --t3:       #7a9bb8;
+  --blue:     #0069c2;
+  --blue2:    #004e94;
+  --green:    #097a4e;
+  --yellow:   #a86b00;
+  --orange:   #b84200;
+  --red:      #b02020;
+  --red2:     #8a1515;
+  --mono: 'DM Mono', monospace;
+  --sans: 'Noto Sans JP', sans-serif;
+  --r: 10px;
+  --r-sm: 6px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--text);
+  font-size:14px;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+
+/* ══ STEP SHELL ══ */
+.shell{
+  max-width:480px;
+  margin:0 auto;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ══ TOPBAR ══ */
+.topbar{
+  background:var(--surface);
+  border-bottom:2px solid var(--blue);
+  padding:10px 16px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  position:sticky;
+  top:0;
+  z-index:200;
+  box-shadow:0 2px 8px rgba(0,105,194,0.10);
+}
+.topbar-logo{
+  font-size:17px;
+  font-weight:900;
+  letter-spacing:-0.5px;
+  color:var(--text);
+}
+.topbar-logo span{color:var(--blue);}
+.topbar-spacer{flex:1;}
+.topbar-update{
+  font-size:12px;
+  padding:5px 10px;
+  border:1px solid var(--border);
+  border-radius:var(--r-sm);
+  background:var(--s2);
+  color:var(--t2);
+  cursor:pointer;
+  min-height:44px;
+}
+.topbar-badge{
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:1px;
+  background:rgba(0,105,194,0.10);
+  color:var(--blue);
+  border:1px solid rgba(0,105,194,0.25);
+  padding:3px 9px;
+  border-radius:3px;
+}
+
+/* ══ STEP INDICATOR ══ */
+.step-bar{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:10px 16px;
+  display:flex;
+  align-items:center;
+  gap:0;
+}
+.step-item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  flex:1;
+  position:relative;
+}
+.step-item:not(:last-child)::after{
+  content:'';
+  position:absolute;
+  top:13px;
+  left:50%;
+  width:100%;
+  height:2px;
+  background:var(--border);
+  z-index:0;
+}
+.step-item.done:not(:last-child)::after{background:var(--blue);}
+.step-num{
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  border:2px solid var(--border);
+  background:var(--bg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:var(--mono);
+  font-size:11px;
+  font-weight:500;
+  color:var(--t3);
+  position:relative;
+  z-index:1;
+  transition:all .2s;
+}
+.step-item.done .step-num{background:var(--blue);border-color:var(--blue);color:#fff;}
+.step-item.active .step-num{background:var(--surface);border-color:var(--blue);color:var(--blue);box-shadow:0 0 0 3px rgba(0,105,194,0.15);}
+.step-label{font-size:9px;color:var(--t3);margin-top:3px;letter-spacing:0.3px;white-space:nowrap;}
+.step-item.active .step-label{color:var(--blue);font-weight:700;}
+.step-item.done .step-label{color:var(--blue2);}
+
+/* ══ PANELS ══ */
+.panel{display:none;flex:1;flex-direction:column;overflow-y:auto;}
+.panel.active{display:flex;}
+.panel-body{flex:1;padding:16px;display:flex;flex-direction:column;gap:14px;}
+
+/* ══ CARDS ══ */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  overflow:hidden;
+}
+.card-header{
+  padding:10px 14px;
+  background:var(--s2);
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:0.3px;
+}
+.card-header .dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+.card-body{padding:12px 14px;}
+
+/* ══ VITALS INPUT ══ */
+.vitals-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.vital-field{
+  background:var(--s2);
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:8px 10px;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  transition:border-color .15s;
+}
+.vital-field:focus-within{border-color:var(--blue);}
+.vital-label{font-size:10px;color:var(--t3);font-family:var(--mono);letter-spacing:.5px;}
+.vital-row{display:flex;align-items:baseline;gap:4px;}
+.vital-input{
+  background:none;
+  border:none;
+  outline:none;
+  font-family:var(--mono);
+  font-size:22px;
+  font-weight:500;
+  color:var(--text);
+  width:100%;
+}
+.vital-unit{font-size:11px;color:var(--t3);white-space:nowrap;}
+.vital-field.warn{border-color:var(--orange);}
+.vital-field.crit{border-color:var(--red);}
+.vital-field.warn .vital-input{color:var(--orange);}
+.vital-field.crit .vital-input{color:var(--red);}
+
+/* タップで開くダイヤル（ドクターカー仕様・カードコンパクト） */
+.vital-item{
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px 12px;
+  cursor:pointer;
+  text-align:center;
+  transition:background .1s, border-color .15s;
+}
+.vital-item:hover{ background:var(--s2); }
+.vital-item:active{ background:var(--s3); }
+.vital-item .vital-label{ font-size:10px; color:var(--t3); margin-bottom:2px; }
+.vital-item .vital-value{ font-size:18px; font-weight:600; color:var(--text); font-family:var(--mono); }
+.vital-item .vital-unit{ font-size:11px; color:var(--t3); }
+/* 基本情報の年齢：性別selectと同じ高さ・スタイルに揃える */
+.field-group .vital-item{
+  padding:9px 12px;
+  border-radius:var(--r-sm);
+  border-width:1.5px;
+  min-height:40px;
+  display:flex;
+  flex-direction:row;
+  justify-content:flex-start;
+  align-items:center;
+  text-align:left;
+}
+.field-group .vital-item .vital-value{ font-size:13px; font-weight:500; flex:1; }
+.field-group .vital-item .vital-unit{ font-size:11px; margin-left:auto; flex-shrink:0; }
+.vital-field.warn .vital-item{ border-color:var(--orange); }
+.vital-field.crit .vital-item{ border-color:var(--red); }
+.vital-field.crit .vital-item .vital-value{ color:var(--red); }
+
+/* ボトムシート ダイヤルオーバーレイ */
+.dial-overlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,0.4);
+  z-index:1000; display:none;
+  align-items:flex-end; justify-content:center;
+  touch-action:none;
+  overscroll-behavior:contain;
+}
+.dial-overlay.show{ display:flex; }
+body.dial-open{ height:100vh; overflow:hidden; }
+.dial-container{
+  background:var(--surface);
+  border-radius:16px 16px 0 0;
+  width:100%; max-width:500px;
+  padding-bottom:env(safe-area-inset-bottom);
+  animation:slideUp 0.25s ease-out;
+}
+@keyframes slideUp{ from{ transform:translateY(100%); } }
+.dial-header{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:14px 20px; border-bottom:0.5px solid var(--border);
+}
+.dial-title{ font-size:17px; font-weight:600; }
+.dial-done{
+  background:none; border:none;
+  color:var(--blue); font-size:17px; font-weight:600;
+  cursor:pointer;
+}
+.dial-body{
+  display:flex; justify-content:center;
+  padding:20px; gap:10px;
+}
+.dial-wheel{
+  height:200px; width:100px;
+  overflow:hidden; position:relative;
+  touch-action:pan-y;
+}
+.dial-wheel::before,.dial-wheel::after{
+  content:''; position:absolute; left:0; right:0;
+  height:80px; pointer-events:none; z-index:2;
+}
+.dial-wheel::before{
+  top:0;
+  background:linear-gradient(to bottom, var(--surface) 0%, transparent 100%);
+}
+.dial-wheel::after{
+  bottom:0;
+  background:linear-gradient(to top, var(--surface) 0%, transparent 100%);
+}
+.dial-highlight{
+  position:absolute; top:50%; left:0; right:0;
+  height:40px; transform:translateY(-50%);
+  background:var(--s2); border-radius:8px;
+  z-index:1;
+}
+.dial-scroll{
+  position:relative; z-index:3;
+  padding:80px 0;
+  transition:transform 0.15s ease-out;
+}
+.dial-option{
+  height:40px; display:flex;
+  align-items:center; justify-content:center;
+  font-size:18px; font-weight:500;
+  color:var(--t3);
+  transition:all 0.15s;
+}
+.dial-option.selected{
+  color:var(--text); font-weight:600;
+  font-size:22px;
+}
+.dial-unit{
+  font-size:14px; color:var(--t3);
+  align-self:center;
+}
+
+/* ══ TEXT INPUT ══ */
+.field-group{display:flex;flex-direction:column;gap:4px;}
+.field-label{font-size:11px;font-weight:700;color:var(--t2);}
+.field-input{
+  background:var(--s2);
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:9px 12px;
+  font-size:13px;
+  color:var(--text);
+  font-family:var(--sans);
+  outline:none;
+  width:100%;
+  transition:border-color .15s;
+}
+.field-input:focus{border-color:var(--blue);}
+.field-select{
+  background:var(--s2);
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:9px 12px;
+  font-size:13px;
+  color:var(--text);
+  font-family:var(--sans);
+  outline:none;
+  width:100%;
+  appearance:none;
+  transition:border-color .15s;
+}
+.field-select:focus{border-color:var(--blue);}
+
+/* ══ TOGGLE CHECKS ══ */
+.check-grid{display:flex;flex-direction:column;gap:0;}
+.check-item{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:10px 14px;
+  border-bottom:1px solid rgba(200,218,240,0.5);
+  cursor:pointer;
+  transition:background .1s;
+  user-select:none;
+  position:relative;
+}
+.check-item:last-child{border-bottom:none;}
+.check-item:hover{background:rgba(0,105,194,0.04);}
+.check-item.active{background:rgba(0,105,194,0.06);}
+
+.ci-box{
+  width:20px;height:20px;
+  border-radius:5px;
+  border:2px solid var(--border);
+  flex-shrink:0;
+  margin-top:1px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;
+  transition:all .15s;
+  background:var(--surface);
+}
+.check-item.active .ci-box{background:var(--blue);border-color:var(--blue);color:#fff;}
+.check-item[data-severity="3"].active .ci-box{background:var(--red);border-color:var(--red);}
+.check-item[data-severity="2"].active .ci-box{background:var(--orange);border-color:var(--orange);}
+.check-item[data-severity="1"].active .ci-box{background:var(--yellow);border-color:var(--yellow);}
+
+.ci-text{flex:1;}
+.ci-main{font-size:13px;color:var(--text);font-weight:500;}
+.ci-sub{font-size:11px;color:var(--t3);margin-top:1px;line-height:1.3;}
+
+.ci-badge{
+  font-family:var(--mono);
+  font-size:9px;
+  font-weight:500;
+  padding:2px 6px;
+  border-radius:3px;
+  flex-shrink:0;
+  margin-top:2px;
+  align-self:flex-start;
+}
+.badge-3{background:rgba(176,32,32,0.12);color:var(--red);}
+.badge-2{background:rgba(184,66,0,0.12);color:var(--orange);}
+.badge-1{background:rgba(168,107,0,0.12);color:var(--yellow);}
+
+/* ══ RISK METER ══ */
+.risk-meter-wrap{
+  background:var(--surface);
+  border:2px solid var(--border);
+  border-radius:var(--r);
+  padding:16px;
+  transition:border-color .3s;
+}
+.risk-meter-wrap.level-0{border-color:var(--border);}
+.risk-meter-wrap.level-1{border-color:rgba(9,122,78,0.5);}
+.risk-meter-wrap.level-2{border-color:rgba(168,107,0,0.5);}
+.risk-meter-wrap.level-3{border-color:rgba(184,66,0,0.6);}
+.risk-meter-wrap.level-4{border-color:rgba(176,32,32,0.7);box-shadow:0 0 0 3px rgba(176,32,32,0.10);}
+
+.risk-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;}
+.risk-emoji{font-size:32px;line-height:1;flex-shrink:0;}
+.risk-label{font-size:11px;color:var(--t2);font-weight:500;margin-bottom:2px;}
+.risk-title{font-size:18px;font-weight:900;line-height:1.2;}
+.risk-sub{font-size:11px;color:var(--t2);margin-top:3px;line-height:1.4;}
+
+.risk-title.c0{color:var(--t2);}
+.risk-title.c1{color:var(--green);}
+.risk-title.c2{color:var(--yellow);}
+.risk-title.c3{color:var(--orange);}
+.risk-title.c4{color:var(--red);}
+
+.meter-track{
+  background:var(--s3);
+  border-radius:8px;
+  height:12px;
+  overflow:hidden;
+  position:relative;
+  margin-bottom:6px;
+}
+.meter-fill{
+  height:100%;
+  border-radius:8px;
+  transition:width .5s cubic-bezier(.4,0,.2,1), background .3s;
+}
+.meter-ticks{
+  display:flex;
+  justify-content:space-between;
+  padding:0 1px;
+}
+.meter-tick{font-size:9px;color:var(--t3);font-family:var(--mono);}
+
+.score-num{
+  font-family:var(--mono);
+  font-size:28px;
+  font-weight:500;
+  line-height:1;
+}
+
+/* ══ RULE ALERTS ══ */
+.alert-stack{display:flex;flex-direction:column;gap:6px;}
+.alert{
+  display:flex;
+  gap:10px;
+  border-radius:var(--r-sm);
+  padding:10px 12px;
+  border-left:4px solid;
+  background:var(--surface);
+  align-items:flex-start;
+}
+.alert.al-crit{border-color:var(--red);background:rgba(176,32,32,0.05);}
+.alert.al-warn{border-color:var(--orange);background:rgba(184,66,0,0.05);}
+.alert.al-info{border-color:var(--blue);background:rgba(0,105,194,0.05);}
+.alert.al-ok{border-color:var(--green);background:rgba(9,122,78,0.05);}
+.alert-icon{font-size:16px;flex-shrink:0;line-height:1.4;}
+.alert-body{flex:1;}
+.alert-title{font-size:12px;font-weight:700;margin-bottom:1px;}
+.alert-title.crit{color:var(--red);}
+.alert-title.warn{color:var(--orange);}
+.alert-title.info{color:var(--blue);}
+.alert-title.ok{color:var(--green);}
+.alert-text{font-size:11px;color:var(--t2);line-height:1.5;}
+
+/* ══ TRANSPORT DECISION ══ */
+.transport-banner{
+  border-radius:var(--r);
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  border:2px solid;
+}
+.transport-banner.t-go{background:rgba(9,122,78,0.07);border-color:rgba(9,122,78,0.35);}
+.transport-banner.t-caution{background:rgba(168,107,0,0.07);border-color:rgba(168,107,0,0.35);}
+.transport-banner.t-hold{background:rgba(184,66,0,0.07);border-color:rgba(184,66,0,0.4);}
+.transport-banner.t-stop{background:rgba(176,32,32,0.08);border-color:rgba(176,32,32,0.5);}
+.transport-icon{font-size:28px;flex-shrink:0;}
+.transport-content h3{font-size:15px;font-weight:900;margin-bottom:3px;}
+.t-go h3{color:var(--green);}
+.t-caution h3{color:var(--yellow);}
+.t-hold h3{color:var(--orange);}
+.t-stop h3{color:var(--red);}
+.transport-content p{font-size:12px;color:var(--t2);line-height:1.4;}
+
+/* ══ PLAN CARDS ══ */
+.plan-stack{display:flex;flex-direction:column;gap:10px;}
+.plan-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.plan-head{
+  padding:10px 14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border-bottom:1px solid var(--border);
+}
+.plan-tag{
+  font-family:var(--mono);
+  font-size:10px;
+  font-weight:500;
+  padding:3px 8px;
+  border-radius:3px;
+  flex-shrink:0;
+}
+.pa .plan-tag{background:rgba(0,105,194,0.12);color:var(--blue);}
+.pb .plan-tag{background:rgba(9,122,78,0.12);color:var(--green);}
+.pc .plan-tag{background:rgba(168,107,0,0.12);color:var(--yellow);}
+.pd .plan-tag,.pd .plan-head{background:rgba(176,32,32,0.05);}
+.pd .plan-tag{background:rgba(176,32,32,0.12);color:var(--red);}
+.pd{border-color:rgba(176,32,32,0.35);}
+
+.plan-head-title{font-size:13px;font-weight:700;flex:1;color:var(--text);}
+.plan-suggest{
+  font-size:10px;
+  padding:2px 7px;
+  border-radius:3px;
+  border:1px dashed;
+  border-color:var(--border);
+  color:var(--t3);
+  cursor:pointer;
+  transition:all .15s;
+}
+.plan-suggest:hover{border-color:var(--blue);color:var(--blue);}
+
+.plan-body{padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.plan-textarea{
+  width:100%;
+  background:var(--s2);
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:8px 10px;
+  font-size:13px;
+  color:var(--text);
+  font-family:var(--sans);
+  resize:none;
+  outline:none;
+  min-height:60px;
+  transition:border-color .15s;
+  line-height:1.5;
+}
+.plan-textarea:focus{border-color:var(--blue);}
+.plan-textarea.auto-filled{border-color:var(--blue);background:rgba(0,105,194,0.04);}
+
+.role-row{display:flex;flex-wrap:wrap;gap:5px;}
+.role-chip{
+  font-size:11px;
+  padding:4px 10px;
+  border-radius:99px;
+  border:1.5px solid var(--border);
+  background:var(--surface);
+  color:var(--t2);
+  cursor:pointer;
+  transition:all .15s;
+  user-select:none;
+}
+.role-chip:hover{border-color:var(--b2);}
+.role-chip.on{background:var(--blue);border-color:var(--blue);color:#fff;}
+
+.cico-box{
+  background:rgba(176,32,32,0.06);
+  border:2px solid rgba(176,32,32,0.3);
+  border-radius:var(--r);
+  padding:14px;
+}
+.cico-title{font-size:14px;font-weight:900;color:var(--red);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.cico-steps{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.cico-step{
+  flex:1;
+  background:rgba(176,32,32,0.10);
+  border:1px solid rgba(176,32,32,0.25);
+  border-radius:var(--r-sm);
+  padding:8px;
+  text-align:center;
+}
+.cico-step .cs-num{font-family:var(--mono);font-size:10px;color:var(--red);margin-bottom:2px;}
+.cico-step .cs-label{font-size:12px;font-weight:700;color:var(--red);}
+.cico-step .cs-en{font-size:10px;color:rgba(176,32,32,0.6);}
+
+/* ══ CHECKLIST ══ */
+.cl-progress{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:4px;
+}
+.cl-progress-text{font-size:12px;color:var(--t2);}
+.cl-frac{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--blue);}
+.cl-track{flex:1;height:6px;background:var(--s3);border-radius:4px;overflow:hidden;}
+.cl-fill{height:100%;background:var(--blue);border-radius:4px;transition:width .3s;}
+
+.cl-section{margin-bottom:2px;}
+.cl-sec-head{
+  font-size:11px;
+  font-weight:700;
+  color:var(--t2);
+  padding:8px 14px 4px;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+}
+.cl-item{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:9px 14px;
+  border-bottom:1px solid rgba(200,218,240,0.5);
+  cursor:pointer;
+  transition:background .1s;
+  user-select:none;
+}
+.cl-item:last-child{border-bottom:none;}
+.cl-item:hover{background:rgba(0,105,194,0.04);}
+.cl-item.checked{background:rgba(9,122,78,0.04);}
+.cl-item.urgent{border-left:3px solid var(--red);padding-left:11px;}
+.cl-check{
+  width:20px;height:20px;
+  border:2px solid var(--border);
+  border-radius:4px;
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;
+  transition:all .15s;
+  background:var(--surface);
+  margin-top:1px;
+}
+.cl-item.checked .cl-check{background:var(--green);border-color:var(--green);color:#fff;}
+.cl-item.urgent:not(.checked) .cl-check{border-color:var(--red);}
+.cl-text{flex:1;}
+.cl-main{font-size:13px;color:var(--text);}
+.cl-sub{font-size:11px;color:var(--t3);margin-top:1px;}
+.cl-tag{font-size:9px;font-family:var(--mono);padding:1px 5px;border-radius:2px;background:rgba(176,32,32,0.10);color:var(--red);margin-left:6px;vertical-align:middle;}
+
+/* ══ HANDOVER ══ */
+.handover-card{
+  background:var(--surface);
+  border:2px solid var(--border);
+  border-radius:var(--r);
+  overflow:hidden;
+}
+.handover-head{
+  background:var(--blue);
+  padding:14px 16px;
+  color:#fff;
+}
+.handover-head h3{font-size:16px;font-weight:900;}
+.handover-head p{font-size:11px;opacity:.8;margin-top:2px;}
+.handover-body{padding:14px;}
+.ho-row{
+  display:flex;
+  gap:8px;
+  padding:9px 0;
+  border-bottom:1px solid var(--border);
+  align-items:flex-start;
+}
+.ho-row:last-child{border-bottom:none;}
+.ho-label{
+  font-size:11px;
+  font-weight:700;
+  color:var(--t2);
+  width:90px;
+  flex-shrink:0;
+  padding-top:1px;
+}
+.ho-val{font-size:13px;color:var(--text);flex:1;line-height:1.5;}
+.ho-val.critical{color:var(--red);font-weight:700;}
+.ho-val.warn{color:var(--orange);font-weight:700;}
+
+.timestamp-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  font-family:var(--mono);
+  font-size:11px;
+  background:var(--s2);
+  border:1px solid var(--border);
+  border-radius:3px;
+  padding:2px 8px;
+  color:var(--t2);
+}
+
+/* ══ BUTTONS ══ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 18px;
+  border-radius:8px;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .15s;
+  border:none;
+  font-family:var(--sans);
+  letter-spacing:0.2px;
+}
+.btn-primary{background:var(--blue);color:#fff;}
+.btn-primary:hover{background:var(--blue2);}
+.btn-primary:active{transform:scale(0.98);}
+.btn-ghost{background:var(--surface);color:var(--t2);border:1.5px solid var(--border);}
+.btn-ghost:hover{border-color:var(--b2);color:var(--text);}
+.btn-red{background:rgba(176,32,32,0.10);color:var(--red);border:1.5px solid rgba(176,32,32,0.25);}
+.btn-red:hover{background:rgba(176,32,32,0.18);}
+.btn-full{width:100%;}
+.btn-sm{padding:7px 14px;font-size:12px;}
+
+/* トースト（共有・コピー完了のフィードバック） */
+.toast-wrap{
+  position:fixed; left:50%; bottom:calc(80px + env(safe-area-inset-bottom));
+  transform:translateX(-50%);
+  z-index:200;
+  pointer-events:none;
+}
+.toast{
+  padding:10px 18px;
+  border-radius:8px;
+  background:var(--text);
+  color:#fff;
+  font-size:13px;
+  font-weight:600;
+  white-space:nowrap;
+  box-shadow:0 4px 12px rgba(0,0,0,0.2);
+  opacity:0;
+  transition:opacity .2s;
+}
+.toast.show{ opacity:1; }
+
+/* ══ BOTTOM BAR ══ */
+.bottom-bar{
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  padding:12px 16px;
+  display:flex;
+  gap:8px;
+  box-shadow:0 -2px 10px rgba(0,0,0,0.06);
+}
+
+/* ══ MISC ══ */
+.section-label{
+  font-size:11px;
+  font-weight:700;
+  color:var(--t2);
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  margin-bottom:6px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* 薬機法：医療機器でない旨の表示 */
+.legal-disclaimer{
+  font-size:10px;
+  color:var(--t3);
+  line-height:1.5;
+  padding:8px 10px;
+  margin-bottom:8px;
+  background:var(--s2);
+  border-radius:var(--r-sm);
+  border:1px solid var(--border);
+}
+.inline-notice{
+  background:rgba(0,105,194,0.07);
+  border:1px solid rgba(0,105,194,0.20);
+  border-radius:var(--r-sm);
+  padding:10px 12px;
+  font-size:12px;
+  color:var(--t2);
+  line-height:1.5;
+}
+.inline-notice strong{color:var(--blue);}
+
+.tag-inline{
+  display:inline-block;
+  font-size:10px;
+  padding:2px 7px;
+  border-radius:3px;
+}
+.tag-blue{background:rgba(0,105,194,0.10);color:var(--blue);border:1px solid rgba(0,105,194,0.20);}
+.tag-green{background:rgba(9,122,78,0.10);color:var(--green);border:1px solid rgba(9,122,78,0.20);}
+.tag-red{background:rgba(176,32,32,0.10);color:var(--red);border:1px solid rgba(176,32,32,0.20);}
+.tag-orange{background:rgba(184,66,0,0.10);color:var(--orange);border:1px solid rgba(184,66,0,0.20);}
+
+.empty-hint{text-align:center;padding:20px;color:var(--t3);font-size:12px;}
+
+/* ══ RESET BTN ══ */
+.reset-btn{
+  position:fixed;
+  bottom:80px;
+  right:16px;
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:99px;
+  padding:8px 14px;
+  font-size:12px;
+  font-weight:700;
+  color:var(--t2);
+  cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,0.10);
+  display:none;
+  transition:all .15s;
+  z-index:100;
+}
+.reset-btn:hover{border-color:var(--red);color:var(--red);}
+.reset-btn.show{display:flex;align-items:center;gap:4px;}
+
+/* ══ FLASH ══ */
+@keyframes flashIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+.flash-in{animation:flashIn .25s ease both;}
+
+/* SpO2 warning color in vital-input */
+input[data-key="spo2"].warn-val{color:var(--orange)!important;}
+input[data-key="spo2"].crit-val{color:var(--red)!important;}
+
+/* ══ NPPV ASSESSMENT CARD ══ */
+.nppv-card{
+  background:var(--surface);
+  border:2px solid rgba(96,64,184,0.30);
+  border-radius:var(--r);
+  overflow:hidden;
+}
+.nppv-head{
+  background:rgba(96,64,184,0.08);
+  border-bottom:1px solid rgba(96,64,184,0.20);
+  padding:10px 14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.nppv-head-title{font-size:13px;font-weight:900;color:#4a30a0;}
+.nppv-tag{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  padding:2px 8px;border-radius:3px;
+  background:rgba(96,64,184,0.12);color:#4a30a0;
+}
+.nppv-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
+
+.nppv-verdict{
+  border-radius:var(--r-sm);
+  padding:12px 14px;
+  display:flex;align-items:flex-start;gap:10px;
+  border:1.5px solid;
+}
+.nppv-verdict.ok{background:rgba(9,122,78,0.07);border-color:rgba(9,122,78,0.35);}
+.nppv-verdict.caution{background:rgba(168,107,0,0.07);border-color:rgba(168,107,0,0.35);}
+.nppv-verdict.ng{background:rgba(176,32,32,0.07);border-color:rgba(176,32,32,0.35);}
+.nv-icon{font-size:22px;flex-shrink:0;line-height:1.2;}
+.nv-title{font-size:13px;font-weight:900;margin-bottom:3px;}
+.nv-title.ok{color:var(--green);}
+.nv-title.caution{color:var(--yellow);}
+.nv-title.ng{color:var(--red);}
+.nv-text{font-size:11px;color:var(--t2);line-height:1.5;}
+
+.nppv-criteria{display:flex;flex-direction:column;gap:6px;}
+.nppv-row{
+  display:flex;gap:8px;align-items:flex-start;
+  font-size:12px;line-height:1.4;
+}
+.nppv-dot{
+  width:18px;height:18px;border-radius:50%;
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;margin-top:1px;
+}
+.nppv-dot.y{background:rgba(9,122,78,0.15);color:var(--green);}
+.nppv-dot.n{background:rgba(176,32,32,0.15);color:var(--red);}
+.nppv-dot.w{background:rgba(168,107,0,0.15);color:var(--yellow);}
+
+.nppv-trap{
+  background:rgba(176,32,32,0.06);
+  border:1px dashed rgba(176,32,32,0.35);
+  border-radius:var(--r-sm);
+  padding:10px 12px;
+}
+.nppv-trap-title{
+  font-size:12px;font-weight:900;color:var(--red);
+  display:flex;align-items:center;gap:5px;margin-bottom:5px;
+}
+.nppv-trap-text{font-size:11px;color:var(--t2);line-height:1.5;}
+.nppv-trap-signs{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;}
+.nppv-trap-sign{
+  font-size:10px;padding:2px 8px;border-radius:3px;
+  background:rgba(176,32,32,0.10);color:var(--red);
+  border:1px solid rgba(176,32,32,0.20);
+}
+
+.nppv-on-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(96,64,184,0.10);
+  border:1.5px solid rgba(96,64,184,0.30);
+  border-radius:99px;
+  padding:5px 12px;
+  font-size:12px;font-weight:700;color:#4a30a0;
+  cursor:pointer;user-select:none;transition:all .15s;
+}
+.nppv-on-badge.on{background:rgba(96,64,184,0.18);border-color:#4a30a0;}
+.nppv-on-badge .nb-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:#c0b0f0;transition:background .15s;
+}
+.nppv-on-badge.on .nb-dot{background:#4a30a0;}
+
+/* ══ SPLASH SCREEN ══ */
+#splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: linear-gradient(160deg, #0e2258 0%, #061438 55%, #030a20 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  /* slide-up exit */
+  transition: transform 0.72s cubic-bezier(0.76, 0, 0.24, 1);
+}
+#splash.slide-away {
+  transform: translateY(-100%);
+}
+/* icon wrapper: scale-in "ボワーン" */
+#splash-icon {
+  opacity: 0;
+  transform: scale(0.3);
+  transition:
+    opacity  0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 0 32px rgba(70,130,255,0.4));
+}
+#splash-icon.show {
+  opacity: 1;
+  transform: scale(1);
+}
+#splash-title {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  text-align: center;
+}
+#splash-title.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+#splash-title .s-main {
+  font-family: var(--sans);
+  font-weight: 900;
+  font-size: 26px;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+}
+#splash-title .s-main span { color: #60a8ff; }
+#splash-title .s-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: rgba(255,255,255,0.35);
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+/* light pulse on icon after show */
+@keyframes splash-glow {
+  0%,100% { filter: drop-shadow(0 0 24px rgba(70,130,255,0.35)); }
+  50%      { filter: drop-shadow(0 0 52px rgba(100,180,255,0.65)); }
+}
+#splash-icon.show {
+  animation: splash-glow 2s ease-in-out infinite;
+}
+</style>
+</head>
+<body>
+
+<!-- ══ SPLASH SCREEN ══ -->
+<div id="splash">
+  <div id="splash-icon">
+    <svg width="160" height="160" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="spBg" cx="50%" cy="42%">
+          <stop offset="0%"   stop-color="#1a3070"/>
+          <stop offset="65%"  stop-color="#0a1c4a"/>
+          <stop offset="100%" stop-color="#040c28"/>
+        </radialGradient>
+        <linearGradient id="spCord" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#e8f0ff"/>
+          <stop offset="100%" stop-color="#a0b8e0"/>
+        </linearGradient>
+        <linearGradient id="spMucosa" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#c06040"/>
+          <stop offset="100%" stop-color="#7a2c18"/>
+        </linearGradient>
+        <radialGradient id="spBeam" cx="50%" cy="0%">
+          <stop offset="0%"   stop-color="#ffe87a" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="#ffe87a" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="spVig" cx="50%" cy="50%">
+          <stop offset="55%"  stop-color="#000000" stop-opacity="0"/>
+          <stop offset="100%" stop-color="#000000" stop-opacity="0.5"/>
+        </radialGradient>
+      </defs>
+      <!-- Background -->
+      <rect width="200" height="200" rx="44" fill="url(#spBg)"/>
+      <!-- Light beam -->
+      <ellipse cx="100" cy="58" rx="60" ry="72" fill="url(#spBeam)"/>
+      <!-- AE folds -->
+      <path d="M62 60 Q48 82 52 108 Q54 116 62 120" fill="#7a2c18" opacity="0.9"/>
+      <path d="M138 60 Q152 82 148 108 Q146 116 138 120" fill="#7a2c18" opacity="0.9"/>
+      <!-- Epiglottis -->
+      <path d="M62 60 Q72 38 100 34 Q128 38 138 60 Q118 54 100 52 Q82 54 62 60 Z" fill="url(#spMucosa)"/>
+      <path d="M68 58 Q84 50 100 48 Q116 50 132 58" stroke="#e07050" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.6"/>
+      <!-- Arytenoids -->
+      <ellipse cx="74"  cy="118" rx="16" ry="11" fill="#8a3822" transform="rotate(-10,74,118)"/>
+      <ellipse cx="74"  cy="116" rx="10" ry="7"  fill="#a04828" transform="rotate(-10,74,118)"/>
+      <ellipse cx="126" cy="118" rx="16" ry="11" fill="#8a3822" transform="rotate(10,126,118)"/>
+      <ellipse cx="126" cy="116" rx="10" ry="7"  fill="#a04828" transform="rotate(10,126,118)"/>
+      <path d="M84 122 Q100 126 116 122" stroke="#5a1a0a" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- Glottis opening -->
+      <path d="M100 60 Q78 80 70 105 Q82 120 100 118 Q118 120 130 105 Q122 80 100 60 Z" fill="#020818"/>
+      <!-- Vocal cords -->
+      <path d="M100 60 Q82 78 70 105 Q80 112 100 110 Z" fill="url(#spCord)" opacity="0.95"/>
+      <path d="M100 60 Q118 78 130 105 Q120 112 100 110 Z" fill="url(#spCord)" opacity="0.95"/>
+      <path d="M100 60 Q82 80 70 106" stroke="#c8daf8" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+      <path d="M100 60 Q118 80 130 106" stroke="#c8daf8" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+      <circle cx="100" cy="60" r="3" fill="#deeaff" opacity="0.6"/>
+      <!-- Tracheal rings -->
+      <ellipse cx="100" cy="128" rx="14" ry="5"   fill="none" stroke="#1a3a7a" stroke-width="2"   opacity="0.85"/>
+      <ellipse cx="100" cy="140" rx="10" ry="3.5"  fill="none" stroke="#1a3a7a" stroke-width="1.5" opacity="0.5"/>
+      <ellipse cx="100" cy="150" rx="7"  ry="2.5"  fill="none" stroke="#1a3a7a" stroke-width="1"   opacity="0.28"/>
+      <!-- Laryngoscope blade -->
+      <rect x="88" y="14" width="24" height="36" rx="6" fill="#b8cce8" opacity="0.65"/>
+      <rect x="94" y="16" width="5"  height="32" rx="2" fill="#6a8ab8" opacity="0.45"/>
+      <!-- Light source -->
+      <circle cx="100" cy="48" r="9"  fill="#ffe87a"/>
+      <circle cx="100" cy="48" r="4.5" fill="#fff5b0"/>
+      <!-- Vignette -->
+      <rect width="200" height="200" rx="44" fill="url(#spVig)"/>
+    </svg>
+  </div>
+  <div id="splash-title">
+    <div class="s-main">Airway<span>Guard</span></div>
+    <div class="s-sub">気道シミュレーター · 勉強会・教育用 v2.1</div>
+  </div>
+</div>
+<!-- ══ /SPLASH ══ -->
+
+<div class="shell">
+
+  <!-- ── TOPBAR ── -->
+  <div class="topbar">
+    <div class="topbar-logo">Airway<span>Guard</span></div>
+    <div class="topbar-spacer"></div>
+    <button type="button" class="topbar-update" onclick="updateApp()" title="アプリを最新版に更新">🔄 更新</button>
+    <div class="topbar-badge" id="tbTime">--:--</div>
+  </div>
+
+  <!-- ── STEP BAR ── -->
+  <div class="step-bar" id="stepBar">
+    <div class="step-item active" data-step="0">
+      <div class="step-num">1</div>
+      <div class="step-label">患者情報</div>
+    </div>
+    <div class="step-item" data-step="1">
+      <div class="step-num">2</div>
+      <div class="step-label">危険徴候</div>
+    </div>
+    <div class="step-item" data-step="2">
+      <div class="step-num">3</div>
+      <div class="step-label">リスク整理</div>
+    </div>
+    <div class="step-item" data-step="3">
+      <div class="step-num">4</div>
+      <div class="step-label">Plan共有</div>
+    </div>
+    <div class="step-item" data-step="4">
+      <div class="step-num">5</div>
+      <div class="step-label">確認・申送</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════
+       PANEL 0 : 患者情報
+  ════════════════════════════ -->
+  <div class="panel active" id="panel-0">
+    <div class="panel-body">
+
+      <div class="legal-disclaimer" role="note">
+        本アプリは<strong>勉強会・シミュレーション用の教育ツール</strong>です。医療機器ではありません。診断・治療・予防の決定は行いません。救急隊との勉強会などで、入力内容の記録・整理・共有の練習にご利用ください。臨床判断は医療従事者が行います。<br>
+        <span style="font-size:9px;opacity:0.9;">リスク項目・レベル分けとPlan A〜Dの対応は、ASA 2022 Practice Guidelines for Management of the Difficult Airway の評価項目と戦略の考え方を参考にしつつ、搬送前シミュレーション用に簡略化しています。抜管戦略は対象外です。</span>
+      </div>
+      <div class="inline-notice">
+        📋 まず患者情報を入力してください。バイタルは<strong>現時点の値</strong>を入力します（空欄可）。救急隊とのシミュレーションや勉強会でそのままお使いいただけます。
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="dot" style="background:var(--blue)"></div>
+          基本情報
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+          <div class="vitals-grid">
+            <div class="field-group">
+              <div class="field-label">年齢</div>
+              <div class="vital-item" onclick="openAgeDial()">
+                <input type="hidden" id="f-age" value="">
+                <div class="vital-value" id="f-age-display">—</div>
+                <div class="vital-unit">歳</div>
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="field-label">性別</div>
+              <select class="field-select" id="f-sex">
+                <option value="">選択</option>
+                <option value="男性">男性</option>
+                <option value="女性">女性</option>
+                <option value="その他">その他</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="dot" style="background:var(--orange)"></div>
+          バイタルサイン（現在値）
+        </div>
+        <div class="card-body">
+          <div class="vitals-grid">
+            <div class="vital-field" id="vf-spo2">
+              <div class="vital-item" onclick="openSpo2Dial()">
+                <div class="vital-label">SpO2</div>
+                <input type="hidden" id="v-spo2" data-key="spo2" value="98">
+                <div class="vital-value" id="v-spo2-display">98</div>
+                <div class="vital-unit">%</div>
+              </div>
+            </div>
+            <div class="vital-field" id="vf-hr">
+              <div class="vital-item" onclick="openHrDial()">
+                <div class="vital-label">HR</div>
+                <input type="hidden" id="v-hr" value="80">
+                <div class="vital-value" id="v-hr-display">80</div>
+                <div class="vital-unit">/min</div>
+              </div>
+            </div>
+            <div class="vital-field" id="vf-rr">
+              <div class="vital-item" onclick="openRrDial()">
+                <div class="vital-label">RR</div>
+                <input type="hidden" id="v-rr" value="16">
+                <div class="vital-value" id="v-rr-display">16</div>
+                <div class="vital-unit">/min</div>
+              </div>
+            </div>
+            <div class="vital-field" id="vf-bp">
+              <div class="vital-item" onclick="openBpDial()">
+                <div class="vital-label">BP</div>
+                <input type="hidden" id="v-bp" value="120/80">
+                <div class="vital-value" id="v-bp-display">120/80</div>
+                <div class="vital-unit">mmHg</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NPPV STATUS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="dot" style="background:#4a30a0"></div>
+          NPPV管理状況
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div class="nppv-on-badge" id="nppvOnBadge" onclick="toggleNppvOn()">
+              <div class="nb-dot"></div>
+              現在NPPVで管理中
+            </div>
+            <span style="font-size:11px;color:var(--t3)">タップでON/OFF</span>
+          </div>
+          <div id="nppvOnFields" style="display:none;flex-direction:column;gap:8px;">
+            <div class="vitals-grid">
+              <div class="field-group">
+                <div class="field-label">NPPV モード</div>
+                <select class="field-select" id="nppv-mode">
+                  <option value="cpap">CPAP</option>
+                  <option value="bipap">BiPAP（S/T）</option>
+                  <option value="hfnc">HFNC（高流量）</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <div class="field-label">設定圧 / 流量</div>
+                <input class="field-input" type="text" id="nppv-setting" placeholder="例：IPAP14/EPAP6">
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="field-label">NPPV開始からの経過時間</div>
+              <select class="field-select" id="nppv-duration">
+                <option value="0">30分未満</option>
+                <option value="1">30分〜2時間</option>
+                <option value="2">2〜6時間</option>
+                <option value="3">6時間以上</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <div class="field-label">NPPVでの呼吸状態の推移</div>
+              <select class="field-select" id="nppv-trend">
+                <option value="improve">改善・安定中</option>
+                <option value="stable">変わらず</option>
+                <option value="worsen">徐々に悪化傾向</option>
+                <option value="urgent">急激に悪化</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="dot" style="background:var(--t3)"></div>
+          搬送情報
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+          <div class="vitals-grid">
+            <div class="field-group">
+              <div class="field-label">搬送距離の目安</div>
+              <select class="field-select" id="f-dist">
+                <option value="0">近距離（30分未満）</option>
+                <option value="1">中距離（30〜60分）</option>
+                <option value="2">長距離（1時間以上）</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <div class="field-label">搬送時間帯</div>
+              <select class="field-select" id="f-time">
+                <option value="0">日中（8〜17時）</option>
+                <option value="1">準夜〜深夜</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-group">
+            <div class="field-label">受け入れ先の専門科待機</div>
+            <select class="field-select" id="f-specialist">
+              <option value="0">耳鼻科・麻酔科ともに即時対応可</option>
+              <option value="1">一方のみ対応可</option>
+              <option value="2">専門科の即時対応不可／未確認</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="bottom-bar">
+      <button class="btn btn-primary btn-full" onclick="goStep(1)">危険徴候チェックへ →</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════
+       PANEL 1 : 危険徴候チェック
+  ════════════════════════════ -->
+  <div class="panel" id="panel-1">
+    <div class="panel-body">
+
+      <div class="inline-notice">
+        該当する所見をすべてタップしてください。<span class="tag-red">危重</span>の項目は特に慎重に評価してください。
+      </div>
+
+      <!-- リアルタイムミニメーター -->
+      <div id="mini-meter" style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:12px 14px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+          <span style="font-size:12px;font-weight:700;color:var(--t2)">気道リスクスコア（入力に基づく参考表示）</span>
+          <span class="score-num" id="mini-score" style="font-size:20px;color:var(--t2)">0</span>
+        </div>
+        <div class="meter-track">
+          <div class="meter-fill" id="mini-fill" style="width:0%;background:var(--border);"></div>
+        </div>
+      </div>
+
+      <div class="section-label">🔴 急性閉塞徴候</div>
+      <div class="card">
+        <div class="check-grid">
+          <div class="check-item" data-key="stridor" data-severity="3" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">吸気性喘鳴（Stridor）</div>
+              <div class="ci-sub">安静時のstridor。上気道狭窄の直接証拠</div>
+            </div>
+            <div class="ci-badge badge-3">危重</div>
+          </div>
+          <div class="check-item" data-key="effort" data-severity="3" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">努力呼吸</div>
+              <div class="ci-sub">陥没呼吸・鼻翼呼吸・補助筋使用のいずれか</div>
+            </div>
+            <div class="ci-badge badge-3">危重</div>
+          </div>
+          <div class="check-item" data-key="supine" data-severity="2" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">仰臥位で増悪</div>
+              <div class="ci-sub">坐位でのみ呼吸が安定する。重力性閉塞進行</div>
+            </div>
+            <div class="ci-badge badge-2">高</div>
+          </div>
+          <div class="check-item" data-key="drool" data-severity="2" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">流涎・嚥下不能</div>
+              <div class="ci-sub">唾液が飲み込めない→分泌物誤嚥リスク</div>
+            </div>
+            <div class="ci-badge badge-2">高</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">🟠 声・口腔・頸部所見</div>
+      <div class="card">
+        <div class="check-grid">
+          <div class="check-item" data-key="hoarse" data-severity="2" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">嗄声（Hoarseness）</div>
+              <div class="ci-sub">声門・声門上部病変を示唆</div>
+            </div>
+            <div class="ci-badge badge-2">高</div>
+          </div>
+          <div class="check-item" data-key="mouthopen" data-severity="2" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">開口障害（&lt;3cm）</div>
+              <div class="ci-sub">喉頭鏡・ファイバー挿入が困難になる</div>
+            </div>
+            <div class="ci-badge badge-2">高</div>
+          </div>
+          <div class="check-item" data-key="neckswelling" data-severity="2" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">頸部腫脹・外頸静脈怒張</div>
+              <div class="ci-sub">皮下気腫、捻髪音があれば特に重篤</div>
+            </div>
+            <div class="ci-badge badge-2">高</div>
+          </div>
+          <div class="check-item" data-key="neck_mobility" data-severity="2" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">頸部可動域制限</div>
+              <div class="ci-sub">頭部伸展・屈曲不良→喉頭展開困難のリスク</div>
+            </div>
+            <div class="ci-badge badge-2">高</div>
+          </div>
+          <div class="check-item" data-key="secretion" data-severity="1" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">分泌物増多</div>
+              <div class="ci-sub">気道保護能の低下。吸引が必要な状態</div>
+            </div>
+            <div class="ci-badge badge-1">中</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">🟡 画像・内視鏡所見</div>
+      <div class="card">
+        <div class="check-grid">
+          <div class="check-item" data-key="fiber" data-severity="3" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">喉頭ファイバーで狭窄確認済み</div>
+              <div class="ci-sub">50%以上の管腔狭窄は特に重篤</div>
+            </div>
+            <div class="ci-badge badge-3">危重</div>
+          </div>
+          <div class="check-item" data-key="ct" data-severity="2" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">CTで気道狭窄・圧排あり</div>
+              <div class="ci-sub">腫瘤による気管偏位・径縮小</div>
+            </div>
+            <div class="ci-badge badge-2">高</div>
+          </div>
+          <div class="check-item" data-key="emphysema" data-severity="2" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">皮下気腫・縦隔気腫</div>
+              <div class="ci-sub">気道穿孔・圧迫のリスク</div>
+            </div>
+            <div class="ci-badge badge-2">高</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">⚪ 病因・背景リスク</div>
+      <div class="card">
+        <div class="check-grid">
+          <div class="check-item" data-key="hx_difficult_airway" data-severity="3" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">既往に困難挿管・困難換気</div>
+              <div class="ci-sub">過去に挿管またはマスク/SGA換気が困難だった</div>
+            </div>
+            <div class="ci-badge badge-3">危重</div>
+          </div>
+          <div class="check-item" data-key="tumor" data-severity="2" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">頭頸部腫瘍・照射歴あり</div>
+              <div class="ci-sub">組織硬化・瘢痕→覚醒下戦略を強く推奨</div>
+            </div>
+            <div class="ci-badge badge-2">高</div>
+          </div>
+          <div class="check-item" data-key="deep_neck" data-severity="2" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">深頸部感染・膿瘍</div>
+              <div class="ci-sub">浮腫急速進行→数時間で完全閉塞しうる</div>
+            </div>
+            <div class="ci-badge badge-2">高</div>
+          </div>
+          <div class="check-item" data-key="bleed" data-severity="2" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">気道出血リスク</div>
+              <div class="ci-sub">抗凝固薬・血管腫・術後出血など</div>
+            </div>
+            <div class="ci-badge badge-2">高</div>
+          </div>
+          <div class="check-item" data-key="sedation_needed" data-severity="2" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">鎮静が必要な状況</div>
+              <div class="ci-sub">鎮静→筋弛緩→閉塞急速悪化のリスク</div>
+            </div>
+            <div class="ci-badge badge-2">高</div>
+          </div>
+          <div class="check-item" data-key="osa" data-severity="1" onclick="toggleSign(this)">
+            <div class="ci-box">✓</div>
+            <div class="ci-text">
+              <div class="ci-main">睡眠時無呼吸症候群（OSA）</div>
+              <div class="ci-sub">BMI高値・短頸・舌根肥大を伴うことが多い</div>
+            </div>
+            <div class="ci-badge badge-1">中</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="bottom-bar">
+      <button class="btn btn-ghost" onclick="goStep(0)">← 戻る</button>
+      <button class="btn btn-primary" style="flex:1" onclick="calcAndGo()">リスク整理へ →</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════
+       PANEL 2 : リスク整理
+  ════════════════════════════ -->
+  <div class="panel" id="panel-2">
+    <div class="panel-body">
+
+      <!-- BIG METER -->
+      <div class="risk-meter-wrap" id="riskMeter">
+        <div class="risk-top">
+          <div class="risk-emoji" id="rEmoji">—</div>
+          <div style="flex:1">
+            <div class="risk-label">気道リスクの整理（参考）</div>
+            <div class="risk-title" id="rTitle">—</div>
+            <div class="risk-sub" id="rSub">—</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:10px;color:var(--t3);font-family:var(--mono)">SCORE</div>
+            <div class="score-num" id="rScore" style="font-size:36px;">0</div>
+          </div>
+        </div>
+        <div class="meter-track" style="height:14px;">
+          <div class="meter-fill" id="rFill" style="width:0%"></div>
+        </div>
+        <div class="meter-ticks">
+          <span class="meter-tick">低</span>
+          <span class="meter-tick">中</span>
+          <span class="meter-tick">高</span>
+          <span class="meter-tick">最高</span>
+        </div>
+      </div>
+
+      <!-- TRANSPORT DECISION -->
+      <div id="transportBanner"></div>
+
+      <!-- NPPV ASSESSMENT -->
+      <div id="nppvAssessSection"></div>
+
+      <!-- RULE ALERTS -->
+      <div class="section-label">⚡ 参照メモ（入力に基づく表示）</div>
+      <div class="alert-stack" id="alertStack"></div>
+
+      <!-- POSITIVE FINDINGS TAGS -->
+      <div id="findingTags" style="margin-top:-4px;"></div>
+
+    </div>
+    <div class="bottom-bar">
+      <button class="btn btn-ghost" onclick="goStep(1)">← 修正</button>
+      <button class="btn btn-primary" style="flex:1" onclick="goStep(3)">Plan共有へ →</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════
+       PANEL 3 : Plan共有
+  ════════════════════════════ -->
+  <div class="panel" id="panel-3">
+    <div class="panel-body">
+
+      <div class="inline-notice" id="awakeNotice" style="display:none">
+        ⚠️ <strong>覚醒下気道確保を強く推奨</strong>：このリスクプロファイルでは眠らせる前に気道を確保することが安全なデフォルトです。
+      </div>
+
+      <div class="section-label">気道戦略 Plan A → D</div>
+
+      <!-- NPPV BRIDGE CARD (shown when NPPV is active) -->
+      <div id="nppvBridgeCard" style="display:none;">
+        <div class="nppv-card">
+          <div class="nppv-head">
+            <div class="nppv-tag">BRIDGE</div>
+            <div class="nppv-head-title">NPPV橋渡し戦略</div>
+          </div>
+          <div class="nppv-body">
+            <div style="font-size:12px;color:var(--t2);line-height:1.6;">
+              NPPVは<strong style="color:#4a30a0">気道確保への時間を稼ぐ手段</strong>であり、目的地ではありません。<br>
+              NPPV継続中も確定的な気道戦略（Plan A）の準備を並行して進めてください。
+            </div>
+            <div class="nppv-trap">
+              <div class="nppv-trap-title">⚠️ NPPVトラップに注意</div>
+              <div class="nppv-trap-text">
+                SpO2が保たれていても気道の構造的閉塞は進行している可能性があります。<br>
+                以下の所見が出現した場合は<strong style="color:var(--red)">ためらわず次のPlanへ移行</strong>してください。
+              </div>
+              <div class="nppv-trap-signs">
+                <span class="nppv-trap-sign">FiO2要求が増加</span>
+                <span class="nppv-trap-sign">努力呼吸の増強</span>
+                <span class="nppv-trap-sign">マスクフィット悪化</span>
+                <span class="nppv-trap-sign">意識レベル低下</span>
+                <span class="nppv-trap-sign">SpO2下降傾向</span>
+                <span class="nppv-trap-sign">分泌物増多</span>
+              </div>
+            </div>
+            <div class="field-group">
+              <div class="field-label">NPPV中の役割分担</div>
+              <div class="role-row">
+                <div class="role-chip" onclick="toggleRole(this)">マスク保持</div>
+                <div class="role-chip" onclick="toggleRole(this)">吸引担当</div>
+                <div class="role-chip" onclick="toggleRole(this)">状態観察</div>
+                <div class="role-chip" onclick="toggleRole(this)">移行判断者</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="plan-stack">
+        <div class="plan-card pa">
+          <div class="plan-head">
+            <div class="plan-tag">PLAN A</div>
+            <div class="plan-head-title">第一選択</div>
+            <div class="plan-suggest" onclick="autofill('A')">提案を使う</div>
+          </div>
+          <div class="plan-body">
+            <textarea class="plan-textarea" id="planA" rows="2" placeholder="例：覚醒下軟性気管支鏡挿管"></textarea>
+            <div class="role-row" id="roles-A">
+              <div class="role-chip" onclick="toggleRole(this)">気道担当</div>
+              <div class="role-chip" onclick="toggleRole(this)">薬剤担当</div>
+              <div class="role-chip" onclick="toggleRole(this)">吸引担当</div>
+              <div class="role-chip" onclick="toggleRole(this)">記録</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="plan-card pb">
+          <div class="plan-head">
+            <div class="plan-tag">PLAN B</div>
+            <div class="plan-head-title">挿管失敗時：換気確保</div>
+            <div class="plan-suggest" onclick="autofill('B')">提案を使う</div>
+          </div>
+          <div class="plan-body">
+            <textarea class="plan-textarea" id="planB" rows="2" placeholder="例：i-gel / LMA による換気確保"></textarea>
+            <div class="role-row" id="roles-B">
+              <div class="role-chip" onclick="toggleRole(this)">気道担当</div>
+              <div class="role-chip" onclick="toggleRole(this)">頸部準備</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="plan-card pc">
+          <div class="plan-head">
+            <div class="plan-tag">PLAN C</div>
+            <div class="plan-head-title">マスク換気・覚醒復帰</div>
+            <div class="plan-suggest" onclick="autofill('C')">提案を使う</div>
+          </div>
+          <div class="plan-body">
+            <textarea class="plan-textarea" id="planC" rows="2" placeholder="例：BVM + 経鼻酸素、体位調整、自発呼吸回復"></textarea>
+          </div>
+        </div>
+
+        <div class="plan-card pd">
+          <div class="plan-head">
+            <div class="plan-tag">CICO</div>
+            <div class="plan-head-title">前頸部アクセス（最終手段）</div>
+            <div class="plan-suggest" onclick="autofill('D')">提案を使う</div>
+          </div>
+          <div class="plan-body">
+            <textarea class="plan-textarea" id="planD" rows="2" placeholder="例：Scalpel-Bougie-Tube 緊急輪状甲状間膜切開"></textarea>
+            <div class="role-row" id="roles-D">
+              <div class="role-chip" onclick="toggleRole(this)">術者（指名）</div>
+              <div class="role-chip" onclick="toggleRole(this)">器具準備</div>
+              <div class="role-chip" onclick="toggleRole(this)">タイム係</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cico-box">
+        <div class="cico-title">⚠️ CICO宣言フロー</div>
+        <div style="font-size:12px;color:var(--t2);margin-bottom:2px;">
+          挿管不能・酸素化不能と判断したら<strong style="color:var(--red)">迷わず声に出して宣言する</strong>
+        </div>
+        <div class="cico-steps">
+          <div class="cico-step">
+            <div class="cs-num">01</div>
+            <div class="cs-label">STOP</div>
+            <div class="cs-en">試行中止</div>
+          </div>
+          <div class="cico-step">
+            <div class="cs-num">02</div>
+            <div class="cs-label">DECLARE</div>
+            <div class="cs-en">CICO宣言</div>
+          </div>
+          <div class="cico-step">
+            <div class="cs-num">03</div>
+            <div class="cs-label">ACT</div>
+            <div class="cs-en">前頸部へ</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="bottom-bar">
+      <button class="btn btn-ghost" onclick="goStep(2)">← 整理</button>
+      <button class="btn btn-primary" style="flex:1" onclick="goStep(4)">チェックリスト →</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════
+       PANEL 4 : チェックリスト & 申し送り
+  ════════════════════════════ -->
+  <div class="panel" id="panel-4">
+    <div class="panel-body">
+
+      <div class="cl-progress">
+        <div class="cl-progress-text">完了</div>
+        <div class="cl-frac" id="clFrac">0/0</div>
+        <div class="cl-track"><div class="cl-fill" id="clFill" style="width:0%"></div></div>
+      </div>
+
+      <div class="card" id="clCard">
+        <!-- generated by JS -->
+      </div>
+
+      <div class="section-label" style="margin-top:4px;">申し送りカード</div>
+
+      <div class="handover-card" id="handoverCard">
+        <!-- generated by JS -->
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <button type="button" class="btn btn-primary btn-sm" onclick="shareHandoverCard()">📤 共有（AirDropなど）</button>
+      </div>
+
+      <div id="clDoneMsg" style="display:none;" class="flash-in">
+        <div style="background:rgba(9,122,78,0.08);border:2px solid rgba(9,122,78,0.35);border-radius:var(--r);padding:14px 16px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:4px;">✅</div>
+          <div style="font-size:14px;font-weight:900;color:var(--green);">全項目確認完了</div>
+          <div style="font-size:12px;color:var(--t2);margin-top:4px;">搬送前の準備が整いました</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="bottom-bar">
+      <button class="btn btn-ghost" onclick="goStep(3)">← Plan</button>
+      <button class="btn btn-red" style="flex:1" onclick="resetAll()">🔄 新しい症例</button>
+    </div>
+  </div>
+
+</div><!-- .shell -->
+
+<div class="toast-wrap" id="toastWrap" aria-live="polite">
+  <div class="toast" id="toast"></div>
+</div>
+
+<div class="dial-overlay" id="dialOverlay" onclick="closeDial(event)">
+  <div class="dial-container" onclick="event.stopPropagation()" ontouchmove="event.stopPropagation()">
+    <div class="dial-header">
+      <span class="dial-title" id="dialTitle">値を選択</span>
+      <button type="button" class="dial-done" onclick="confirmDial()">完了</button>
+    </div>
+    <div class="dial-body" id="dialBody"></div>
+  </div>
+</div>
+
+<script>
+/* ══ SPLASH ANIMATION ══ */
+(function() {
+  const splash    = document.getElementById('splash');
+  const icon      = document.getElementById('splash-icon');
+  const title     = document.getElementById('splash-title');
+
+  // Step 1: ボワーン icon pop-in (80ms後)
+  setTimeout(() => { icon.classList.add('show'); }, 80);
+
+  // Step 2: タイトル フェードイン (icon後 280ms)
+  setTimeout(() => { title.classList.add('show'); }, 360);
+
+  // Step 3: スワイプアップ退場 (表示後 1.6s)
+  setTimeout(() => {
+    splash.classList.add('slide-away');
+    // transition完了後にDOMから除去
+    splash.addEventListener('transitionend', () => {
+      splash.style.display = 'none';
+    }, { once: true });
+  }, 1900);
+})();
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+const state = {
+  step: 0,
+  signs: {},      // key → boolean
+  score: 0,
+  level: 0,       // 0-4
+  startTime: new Date(),
+};
+
+// sign definitions: key, weight, label
+const SIGNS = [
+  {key:'stridor',      w:4, label:'吸気性喘鳴'},
+  {key:'effort',       w:3, label:'努力呼吸'},
+  {key:'fiber',        w:4, label:'喉頭ファイバー狭窄'},
+  {key:'supine',       w:2, label:'仰臥位悪化'},
+  {key:'drool',        w:2, label:'流涎・嚥下不能'},
+  {key:'hoarse',       w:2, label:'嗄声'},
+  {key:'mouthopen',    w:2, label:'開口障害'},
+  {key:'neckswelling', w:2, label:'頸部腫脹'},
+  {key:'emphysema',    w:2, label:'皮下気腫'},
+  {key:'ct',           w:2, label:'CT気道狭窄'},
+  {key:'secretion',    w:1, label:'分泌物増多'},
+  {key:'tumor',        w:2, label:'頭頸部腫瘍・照射歴'},
+  {key:'deep_neck',    w:2, label:'深頸部感染'},
+  {key:'bleed',        w:2, label:'気道出血リスク'},
+  {key:'sedation_needed', w:2, label:'鎮静必要'},
+  {key:'osa',          w:1, label:'OSA'},
+  {key:'hx_difficult_airway', w:3, label:'既往に困難挿管・困難換気'},
+  {key:'neck_mobility', w:2, label:'頸部可動域制限'},
+];
+
+const SIGN_MAP = {};
+SIGNS.forEach(s => SIGN_MAP[s.key] = s);
+
+// ═══════════════════════════════════════════
+//  CLOCK
+// ═══════════════════════════════════════════
+function updateClock(){
+  const d = new Date();
+  document.getElementById('tbTime').textContent =
+    d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ═══════════════════════════════════════════
+//  VITAL INPUT COLORING
+// ═══════════════════════════════════════════
+function onVitalInput(el){
+  const key = el.dataset.key;
+  if(key === 'spo2'){
+    const v = parseFloat(el.value);
+    const wf = document.getElementById('vf-spo2');
+    el.classList.remove('warn-val','crit-val');
+    wf.classList.remove('warn','crit');
+    if(!isNaN(v)){
+      if(v < 90){ el.classList.add('crit-val'); wf.classList.add('crit'); }
+      else if(v < 95){ el.classList.add('warn-val'); wf.classList.add('warn'); }
+    }
+  }
+  if(key === 'hr' || el.id==='v-hr'){
+    const v = parseFloat(el.value);
+    const wf = document.getElementById('vf-hr');
+    wf.classList.remove('warn','crit');
+    if(!isNaN(v) && (v > 120 || v < 50)) wf.classList.add('warn');
+  }
+  if(el.id==='v-rr'){
+    const v = parseFloat(el.value);
+    const wf = document.getElementById('vf-rr');
+    wf.classList.remove('warn','crit');
+    if(!isNaN(v) && (v > 25 || v < 8)) wf.classList.add('warn');
+  }
+}
+
+// ═══════════════════════════════════════════
+//  STEP NAVIGATION
+// ═══════════════════════════════════════════
+function goStep(n){
+  // hide all panels
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+n).classList.add('active');
+
+  // update step bar
+  document.querySelectorAll('.step-item').forEach((el,i)=>{
+    el.classList.remove('active','done');
+    if(i < n) el.classList.add('done');
+    else if(i === n) el.classList.add('active');
+  });
+
+  state.step = n;
+  window.scrollTo(0,0);
+}
+
+// ═══════════════════════════════════════════
+//  SIGN TOGGLE
+// ═══════════════════════════════════════════
+function toggleSign(el){
+  el.classList.toggle('active');
+  const key = el.dataset.key;
+  state.signs[key] = el.classList.contains('active');
+  updateMiniMeter();
+}
+
+// メーター表示用のスコア上限（レベル判定は実際のスコアで行う）
+const SCORE_DISPLAY_CAP = 30;
+function updateMiniMeter(){
+  const score = calcScore();
+  const pct = Math.min(score / SCORE_DISPLAY_CAP * 100, 100);
+  document.getElementById('mini-score').textContent = score;
+  const fill = document.getElementById('mini-fill');
+  fill.style.width = pct+'%';
+  if(score===0) fill.style.background='var(--border)';
+  else if(score<=6) fill.style.background='var(--green)';
+  else if(score<=12) fill.style.background='var(--yellow)';
+  else if(score<=18) fill.style.background='var(--orange)';
+  else fill.style.background='var(--red)';
+}
+
+function calcScore(){
+  let s = 0;
+  SIGNS.forEach(def=>{
+    if(state.signs[def.key]) s += def.w;
+  });
+  // transport modifiers
+  const dist = parseInt(document.getElementById('f-dist').value||0);
+  const time = parseInt(document.getElementById('f-time').value||0);
+  const spec = parseInt(document.getElementById('f-specialist').value||0);
+  s += dist + time + spec;
+  return s;
+}
+
+// ═══════════════════════════════════════════
+//  RISK CALCULATION
+// ═══════════════════════════════════════════
+function calcAndGo(){
+  const score = calcScore();
+  state.score = score;
+
+  let level, emoji, title, sub, fillColor, fillPct;
+  const pct = Math.min(score / SCORE_DISPLAY_CAP * 100, 100);
+
+  if(score === 0){
+    level=0; emoji='🟢'; title='リスク低';
+    sub='現時点で重大な気道閉塞徴候なし。継続観察を。';
+    fillColor='var(--green)';
+  } else if(score <= 6){
+    level=1; emoji='🟡'; title='リスク中：要注意';
+    sub='複数の危険因子あり。専門科への早期相談と観察強化。';
+    fillColor='var(--yellow)';
+  } else if(score <= 12){
+    level=2; emoji='🟠'; title='リスク高：搬送前介入を検討';
+    sub='気道閉塞の急速進行が予測される。搬送戦略を今すぐチームで共有。';
+    fillColor='var(--orange)';
+  } else if(score <= 18){
+    level=3; emoji='🔴'; title='最高度リスク：搬送より先に気道確保';
+    sub='CICO発生に備え前頸部アクセス準備を今すぐ開始。搬送は気道確保後。';
+    fillColor='var(--red)';
+  } else {
+    level=4; emoji='🚨'; title='緊急：即時介入が必要';
+    sub='搬送不可。気道確保なしに搬送すると途中で完全閉塞する危険がある。';
+    fillColor='var(--red2)';
+  }
+  state.level = level;
+
+  // Update meter
+  const meter = document.getElementById('riskMeter');
+  meter.className = 'risk-meter-wrap level-'+Math.min(level,4);
+  document.getElementById('rEmoji').textContent = emoji;
+  document.getElementById('rTitle').textContent = title;
+  document.getElementById('rTitle').className = 'risk-title c'+Math.min(level,4);
+  document.getElementById('rSub').textContent = sub;
+  document.getElementById('rScore').textContent = score;
+  const fill = document.getElementById('rFill');
+  fill.style.width = pct+'%';
+  fill.style.background = fillColor;
+
+  // Transport banner
+  renderTransport(level);
+
+  // Alerts
+  renderAlerts();
+
+  // Finding tags
+  renderFindingTags();
+
+  // Auto-fill awake notice on Plan panel
+  const awakeNotice = document.getElementById('awakeNotice');
+  const needsAwake = state.signs.stridor || state.signs.fiber || state.signs.mouthopen ||
+    state.signs.tumor || state.signs.deep_neck || state.signs.hx_difficult_airway || level >= 2;
+  awakeNotice.style.display = needsAwake ? 'block' : 'none';
+
+  // Build checklist
+  buildChecklist();
+
+  // Build handover
+  buildHandover();
+
+  // NPPV assessment
+  renderNppvAssessment();
+
+  goStep(2);
+}
+
+function renderTransport(level){
+  const configs = [
+    {cls:'t-go',    icon:'✅', h:'通常搬送可',              p:'現時点で急激な悪化リスクは低い。状態変化に注意しながら通常搬送を検討できる。'},
+    {cls:'t-caution',icon:'👨‍⚕️', h:'医師同乗搬送を推奨',    p:'悪化に備え医師同乗が望ましい。搬送前にPlan A・Bをチームで共有してから出発する。'},
+    {cls:'t-hold',  icon:'🚨', h:'搬送前に気道戦略確立を', p:'耳鼻科・麻酔科を今すぐ呼ぶ。覚醒下気道確保を検討してから搬送に移行する。'},
+    {cls:'t-stop',  icon:'⛔', h:'搬送延期：先に気道確保',  p:'搬送は気道確保完了後のみ。Scalpel-Bougie-Tubeキットを開封・配置し術者を指名する。'},
+    {cls:'t-stop',  icon:'🚑', h:'緊急介入優先：搬送不可',  p:'即時の外科的気道確保を準備。HEMS・高次医療機関への直接相談を最優先。'},
+  ];
+  const c = configs[Math.min(level, 4)];
+  document.getElementById('transportBanner').innerHTML = `
+    <div class="transport-banner ${c.cls}">
+      <div class="transport-icon">${c.icon}</div>
+      <div class="transport-content">
+        <h3>${c.h}</h3>
+        <p>${c.p}</p>
+      </div>
+    </div>`;
+}
+
+function renderAlerts(){
+  const s = state.signs;
+  const alerts = [];
+
+  if(s.stridor && s.supine)
+    alerts.push({t:'crit', icon:'🚨', title:'吸気性喘鳴 + 仰臥位増悪',
+      text:'上気道狭窄が重篤。搬送中は必ず座位または半座位を維持。平坦搬送で急性閉塞のリスクがある。'});
+  if(s.stridor && !s.supine)
+    alerts.push({t:'crit', icon:'⚠️', title:'吸気性喘鳴あり',
+      text:'気道狭窄の直接証拠。状態は急変しうる。呼吸努力の増加・チアノーゼに注意して即座に再評価する。'});
+  if(s.fiber && s.secretion)
+    alerts.push({t:'crit', icon:'🔴', title:'喉頭狭窄 + 分泌物増多',
+      text:'分泌物の誤嚥で残存気道が完全閉塞する危険。吸引を頻回に行い、吸引担当を専任で配置する。'});
+  if(s.sedation_needed && (s.stridor || s.fiber || s.mouthopen || s.hoarse))
+    alerts.push({t:'crit', icon:'⛔', title:'鎮静が必要 × 気道困難予測',
+      text:'鎮静薬は気道筋を弛緩させ閉塞を一気に悪化させる。覚醒下気道確保戦略を強く推奨する。'});
+  if(s.tumor)
+    alerts.push({t:'warn', icon:'🏥', title:'頭頸部腫瘍・照射歴あり',
+      text:'組織硬化・瘢痕により外科的気道確保も難しくなる。Awake intubation is King。待機的気管切開の閾値を低く保つ。'});
+  if(s.deep_neck)
+    alerts.push({t:'warn', icon:'⚡', title:'深頸部感染・膿瘍',
+      text:'浮腫は数時間で急激に進行する。現在SpO2が保たれていても「安心」は禁物。今すぐ耳鼻科・麻酔科に相談する。'});
+  if(s.bleed && (s.fiber || s.tumor))
+    alerts.push({t:'warn', icon:'🩸', title:'出血リスク + 気道脆弱性',
+      text:'気道操作で大出血が起きると視野確保が不能になる。止血準備と血液製剤の確保を検討する。'});
+
+  // Transport factors
+  const dist = parseInt(document.getElementById('f-dist').value||0);
+  const spec = parseInt(document.getElementById('f-specialist').value||0);
+  if(dist >= 2 && state.level >= 1)
+    alerts.push({t:'warn', icon:'🚁', title:'長距離搬送',
+      text:'搬送中に悪化した場合の対応が限られる。HEMS・医師同乗を強く検討。気道確保後に搬送が理想。'});
+  if(spec >= 2 && state.level >= 2)
+    alerts.push({t:'warn', icon:'📞', title:'受け入れ先の専門科即時対応不可',
+      text:'到着時に専門家がいない状態で搬送を開始しないこと。受け入れ確認が完了してから出発する。'});
+
+  // SpO2 warning
+  const spo2 = parseFloat(document.getElementById('v-spo2').value);
+  if(!isNaN(spo2) && spo2 < 95)
+    alerts.push({t:'crit', icon:'📉', title:`SpO2 ${spo2}%：酸素化不十分`,
+      text:'すでに酸素化が低下している。経鼻高流量酸素またはリザーバーマスクを最大流量で投与し、即時の介入を検討する。'});
+
+  // NPPV-specific alerts
+  const nppvOn = document.getElementById('nppvOnBadge').classList.contains('on');
+  if(nppvOn){
+    const trend = document.getElementById('nppv-trend').value;
+    const duration = parseInt(document.getElementById('nppv-duration').value || 0);
+    if(trend === 'worsen')
+      alerts.push({t:'crit', icon:'📉', title:'NPPV下でも悪化傾向',
+        text:'NPPVは効果的な橋渡しになっていない。確定的な気道確保（覚醒下挿管または気管切開）への移行タイミングを今すぐ判断する。'});
+    if(trend === 'urgent')
+      alerts.push({t:'crit', icon:'🚨', title:'NPPV下で急激悪化：即時移行が必要',
+        text:'NPPVの限界を超えている。CICO発生に備えScalpel-Bougie-Tubeを開封・準備し、すぐに確定的気道確保に移行する。'});
+    if(duration >= 2 && (s.stridor || s.fiber))
+      alerts.push({t:'warn', icon:'⏱️', title:'NPPV長期継続中 × 気道狭窄',
+        text:'NPPVが気道閉塞の進行を隠している可能性がある（NPPVトラップ）。SpO2が保たれていても構造的閉塞は進行しうる。移行を積極的に検討する。'});
+    if(s.sedation_needed)
+      alerts.push({t:'crit', icon:'⛔', title:'鎮静が必要 × NPPV管理中',
+        text:'鎮静薬投与でNPPVのフィット・協力が失われると同時に閉塞が急速に進行する。鎮静前に確定的気道確保を完了させる。'});
+    if(trend === 'improve' && !s.stridor)
+      alerts.push({t:'info', icon:'💜', title:'NPPV橋渡し：有効に機能中',
+        text:'現時点でNPPVは酸素化維持の橋渡しとして機能している。ただし確定的な気道確保の準備は並行して進めること。移行のトリガーをチームで共有する。'});
+  }
+
+  if(alerts.length === 0)
+    alerts.push({t:'ok', icon:'✅', title:'重大な複合リスクなし',
+      text:'現時点で特定の危険な組み合わせは検出されていない。状態変化に注意しながら観察を継続してください。'});
+
+  document.getElementById('alertStack').innerHTML = alerts.map(a=>`
+    <div class="alert al-${a.t} flash-in">
+      <div class="alert-icon">${a.icon}</div>
+      <div class="alert-body">
+        <div class="alert-title ${a.t}">${a.title}</div>
+        <div class="alert-text">${a.text}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderFindingTags(){
+  const active = SIGNS.filter(s => state.signs[s.key]);
+  if(!active.length){
+    document.getElementById('findingTags').innerHTML='';
+    return;
+  }
+  document.getElementById('findingTags').innerHTML = `
+    <div class="section-label">確認された所見</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;">
+      ${active.map(s=>`<span class="tag-inline tag-${s.w>=3?'red':s.w>=2?'orange':'blue'}">${s.label}</span>`).join('')}
+    </div>`;
+}
+
+// ═══════════════════════════════════════════
+//  PLAN AUTO-FILL
+// ═══════════════════════════════════════════
+const planSuggestions = {
+  A: {
+    high: '覚醒下軟性気管支鏡挿管（上局所麻酔 + 鎮静最小化）',
+    mid:  'ビデオ喉頭鏡（第一選択）+ ブジー準備',
+    low:  'ビデオ喉頭鏡（MacintoshまたはAngulated blade）',
+  },
+  B: {
+    high: 'SGAによる緊急酸素化確保（i-gel）または BVM + 経鼻高流量',
+    mid:  'SGAによる換気確保（i-gel size 3–5）',
+    low:  'SGAまたは BVM換気',
+  },
+  C: {
+    high: 'BVM + 経鼻酸素継続・体位調整（座位）。自発呼吸回復を待つ',
+    mid:  'BVM換気 + 経鼻酸素。体位調整で換気改善を図る',
+    low:  'マスク換気で酸素化。覚醒復帰',
+  },
+  D: {
+    all:  'Scalpel-Bougie-Tube 緊急輪状甲状間膜切開（ID 6.0mm チューブ）。訓練された術者が可能な限り速やかに実施。\n① 喉頭固定 → ② 横切開 1〜2cm → ③ Bougie挿入 → ④ チューブ挿入'
+  },
+};
+
+function autofill(plan){
+  const level = state.level;
+  const tier = level >= 3 ? 'high' : level >= 1 ? 'mid' : 'low';
+  let text = '';
+  if(plan === 'D') text = planSuggestions.D.all;
+  else text = planSuggestions[plan][tier];
+  // 誤嚥リスクありかつレベル1以上のとき Plan A に覚醒下挿管検討を追記（ASA 2022 の aspiration risk に基づく）
+  if(plan === 'A' && level >= 1 && (state.signs.drool || state.signs.secretion)){
+    text += '\n（誤嚥リスクありのため覚醒下挿管を検討）';
+  }
+  const ta = document.getElementById('plan'+plan);
+  ta.value = text;
+  ta.classList.add('auto-filled');
+  ta.focus();
+}
+
+function toggleRole(el){
+  el.classList.toggle('on');
+}
+
+// ═══════════════════════════════════════════
+//  CHECKLIST BUILD
+// ═══════════════════════════════════════════
+function buildChecklist(){
+  const s = state.signs;
+  const lvl = state.level;
+
+  const items = [
+    // Always
+    {group:'💨 酸素・換気', urgent:false, main:'SpO2モニター装着', sub:'リザーバーマスク10L/min以上'},
+    {group:'💨 酸素・換気', urgent:lvl>=2, main:'経鼻高流量酸素または経鼻酸素セット', sub:'挿管操作中も酸素投与を継続'},
+    {group:'💨 酸素・換気', urgent:false, main:'BVM（バッグバルブマスク）確認', sub:'適正サイズ・作動チェック'},
+    {group:'💨 酸素・換気', urgent:s.drool||s.secretion, main:'吸引装置・吸引チューブ準備', sub:'硬性・軟性各1本。担当者を決める'},
+
+    {group:'🔧 気道確保器具', urgent:false, main:'ビデオ喉頭鏡準備（第一選択）', sub:'バッテリー残量・映像表示確認'},
+    {group:'🔧 気道確保器具', urgent:false, main:'直接喉頭鏡（バックアップ）', sub:'複数サイズのブレード'},
+    {group:'🔧 気道確保器具', urgent:false, main:'SGA（i-gel / LMA）準備', sub:'適切サイズ選択・開封済み'},
+    {group:'🔧 気道確保器具', urgent:false, main:'気管チューブ + ブジー', sub:'ID 6.0 / 7.0 / 8.0 各1本'},
+    {group:'🔧 気道確保器具', urgent:s.mouthopen||s.tumor, main:'軟性気管支鏡（ファイバー）確認', sub:'覚醒下挿管に使用する場合'},
+
+    {group:'🚨 CICO準備', urgent:lvl>=2, main:'前頸部アクセス器具一式（開封済み）', sub:'Scalpel・Bougie・6.0チューブ・テープ'},
+    {group:'🚨 CICO準備', urgent:lvl>=2, main:'輪状甲状間膜の位置を触診でマーキング', sub:'CTで解剖が変形している場合は特に重要'},
+    {group:'🚨 CICO準備', urgent:lvl>=3, main:'CICO宣言者・術者をチームで指名', sub:'声に出して「担当はAさん」と確認'},
+
+    {group:'👤 チーム・ライン', urgent:false, main:'静脈路確保（18G以上・2本推奨）', sub:'薬剤投与・輸液のため'},
+    {group:'👤 チーム・ライン', urgent:false, main:'心電図・血圧モニター装着', sub:'EtCO2モニターがあれば準備'},
+    {group:'👤 チーム・ライン', urgent:lvl>=2, main:'耳鼻科または麻酔科への相談・召集', sub:'搬送前・到着先両方の確認'},
+    {group:'👤 チーム・ライン', urgent:false, main:'搬送先受け入れ確認（専門科の待機）', sub:'到着時の即時介入が可能かを必ず確認'},
+    {group:'👤 チーム・ライン', urgent:lvl>=2, main:'Plan A〜CICOをチーム全員で口頭確認', sub:'「Plan Bに移行する判断はXさんが行う」まで共有'},
+  ];
+
+  let prevGroup = '';
+  let html = '';
+  let total = 0;
+  items.forEach((item, i)=>{
+    if(item.group !== prevGroup){
+      if(prevGroup) html += '</div>'; // close prev group
+      html += `<div class="cl-section">
+        <div class="cl-sec-head">${item.group}</div>`;
+      prevGroup = item.group;
+    }
+    html += `
+      <div class="cl-item${item.urgent?' urgent':''}" onclick="toggleCl(this)" data-idx="${i}">
+        <div class="cl-check">✓</div>
+        <div class="cl-text">
+          <div class="cl-main">${item.main}${item.urgent?'<span class="cl-tag">要注意</span>':''}</div>
+          <div class="cl-sub">${item.sub}</div>
+        </div>
+      </div>`;
+    total++;
+  });
+  html += '</div>'; // close last group
+
+  document.getElementById('clCard').innerHTML = html;
+  document.getElementById('clFrac').textContent = '0/'+total;
+}
+
+function toggleCl(el){
+  el.classList.toggle('checked');
+  updateClProgress();
+}
+
+function updateClProgress(){
+  const items = document.querySelectorAll('.cl-item');
+  const total = items.length;
+  const checked = document.querySelectorAll('.cl-item.checked').length;
+  document.getElementById('clFrac').textContent = checked+'/'+total;
+  document.getElementById('clFill').style.width = (checked/total*100)+'%';
+  const done = document.getElementById('clDoneMsg');
+  if(checked === total && total > 0){
+    done.style.display = 'block';
+  } else {
+    done.style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════════
+//  HANDOVER CARD
+// ═══════════════════════════════════════════
+function buildHandover(){
+  const age   = document.getElementById('f-age').value;
+  const sex   = document.getElementById('f-sex').value;
+  const spo2  = document.getElementById('v-spo2').value;
+  const hr    = document.getElementById('v-hr').value;
+  const rr    = document.getElementById('v-rr').value;
+  const bp    = document.getElementById('v-bp').value;
+
+  const patient = [age?age+'歳':'年齢不明', sex||'性別不明'].join(' ');
+  const vitals  = [
+    spo2 ? 'SpO2 '+spo2+'%' : null,
+    hr   ? 'HR '+hr : null,
+    rr   ? 'RR '+rr : null,
+    bp   ? 'BP '+bp : null,
+  ].filter(Boolean).join(' / ') || '入力なし';
+
+  const riskLabels = ['低','中','高','最高度','緊急'];
+  const riskColors = ['','ok','warn','warn','critical'];
+  const lvl = Math.min(state.level, 4);
+
+  const activeFindings = SIGNS.filter(s => state.signs[s.key]).map(s => s.label).join('、') || 'なし';
+
+  const distLabels = ['近距離（30分未満）','中距離（30〜60分）','長距離（1時間以上）'];
+  const dist = parseInt(document.getElementById('f-dist').value||0);
+  const specLabels = ['専門科即時対応可','一方のみ対応可','即時対応不可'];
+  const spec = parseInt(document.getElementById('f-specialist').value||0);
+
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+  document.getElementById('handoverCard').innerHTML = `
+    <div class="handover-head">
+      <h3>📋 搬送前申し送りカード</h3>
+      <p>AirwayGuard v2.1（勉強会・シミュレーション用）／ 作成 ${timeStr}</p>
+    </div>
+    <div class="handover-body">
+      <div class="ho-row">
+        <div class="ho-label">患者</div>
+        <div class="ho-val">${patient}</div>
+      </div>
+      <div class="ho-row">
+        <div class="ho-label">バイタル</div>
+        <div class="ho-val ${spo2 && spo2<95?'critical':''}">${vitals}</div>
+      </div>
+      <div class="ho-row">
+        <div class="ho-label">陽性所見</div>
+        <div class="ho-val">${activeFindings}</div>
+      </div>
+      <div class="ho-row">
+        <div class="ho-label">リスク整理</div>
+        <div class="ho-val ${riskColors[lvl]}">Lv.${lvl} — ${riskLabels[lvl]}　スコア ${state.score}</div>
+      </div>
+      <div class="ho-row">
+        <div class="ho-label">搬送条件</div>
+        <div class="ho-val">${distLabels[dist]}／${specLabels[spec]}</div>
+      </div>
+      <div class="ho-row">
+        <div class="ho-label">Plan A</div>
+        <div class="ho-val">${document.getElementById('planA').value || '（未入力）'}</div>
+      </div>
+      <div class="ho-row">
+        <div class="ho-label">CICO対応</div>
+        <div class="ho-val ${lvl>=2?'critical':''}">
+          ${lvl>=2 ? 'Scalpel-Bougie-Tube 準備必須' : '通常準備'}
+        </div>
+      </div>
+      ${(()=>{
+        const nppvBadge = document.getElementById('nppvOnBadge');
+        if(!nppvBadge.classList.contains('on')) return '';
+        const mode = {cpap:'CPAP', bipap:'BiPAP（S/T）', hfnc:'HFNC'}[document.getElementById('nppv-mode').value];
+        const setting = document.getElementById('nppv-setting').value || '—';
+        const trendLabel = {improve:'改善中',stable:'変わらず',worsen:'悪化傾向',urgent:'急激に悪化'}[document.getElementById('nppv-trend').value];
+        const trendColor = {improve:'ok',stable:'',worsen:'warn',urgent:'critical'}[document.getElementById('nppv-trend').value];
+        return `<div class="ho-row">
+          <div class="ho-label">NPPV</div>
+          <div class="ho-val ${trendColor}">${mode} ${setting}　推移：${trendLabel}</div>
+        </div>`;
+      })()}
+    </div>`;
+}
+
+/** 申し送りカードの内容をプレーンテキストで返す（共有・コピー用） */
+function getHandoverText(){
+  buildHandover(); // 表示と内容を最新にしておく
+  const age   = document.getElementById('f-age').value;
+  const sex   = document.getElementById('f-sex').value;
+  const spo2  = document.getElementById('v-spo2').value;
+  const hr    = document.getElementById('v-hr').value;
+  const rr    = document.getElementById('v-rr').value;
+  const bp    = document.getElementById('v-bp').value;
+  const patient = [age ? age + '歳' : '年齢不明', sex || '性別不明'].join(' ');
+  const vitals = [
+    spo2 ? 'SpO2 ' + spo2 + '%' : null,
+    hr ? 'HR ' + hr : null,
+    rr ? 'RR ' + rr : null,
+    bp ? 'BP ' + bp : null,
+  ].filter(Boolean).join(' / ') || '入力なし';
+  const riskLabels = ['低','中','高','最高度','緊急'];
+  const lvl = Math.min(state.level, 4);
+  const activeFindings = SIGNS.filter(s => state.signs[s.key]).map(s => s.label).join('、') || 'なし';
+  const distLabels = ['近距離（30分未満）','中距離（30〜60分）','長距離（1時間以上）'];
+  const dist = parseInt(document.getElementById('f-dist').value || '0', 10);
+  const specLabels = ['専門科即時対応可','一方のみ対応可','即時対応不可'];
+  const spec = parseInt(document.getElementById('f-specialist').value || '0', 10);
+  const planA = document.getElementById('planA').value || '（未入力）';
+  const cicoText = lvl >= 2 ? 'Scalpel-Bougie-Tube 準備必須' : '通常準備';
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+  let nppvLine = '';
+  const nppvBadge = document.getElementById('nppvOnBadge');
+  if (nppvBadge && nppvBadge.classList.contains('on')) {
+    const mode = { cpap:'CPAP', bipap:'BiPAP（S/T）', hfnc:'HFNC' }[document.getElementById('nppv-mode').value] || '—';
+    const setting = document.getElementById('nppv-setting').value || '—';
+    const trendLabel = { improve:'改善中', stable:'変わらず', worsen:'悪化傾向', urgent:'急激に悪化' }[document.getElementById('nppv-trend').value] || '—';
+    nppvLine = '\nNPPV: ' + mode + ' ' + setting + '　推移：' + trendLabel;
+  }
+
+  return [
+    '📋 搬送前申し送りカード（AirwayGuard v2.1・勉強会・シミュレーション用）',
+    '作成 ' + timeStr,
+    '',
+    '患者: ' + patient,
+    'バイタル: ' + vitals,
+    '陽性所見: ' + activeFindings,
+    'リスク整理: Lv.' + lvl + ' — ' + riskLabels[lvl] + '　スコア ' + state.score,
+    '搬送条件: ' + distLabels[dist] + '／' + specLabels[spec],
+    'Plan A: ' + planA,
+    'CICO対応: ' + cicoText + nppvLine,
+  ].join('\n');
+}
+
+function showToast(msg){
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(showToast._tid);
+  showToast._tid = setTimeout(function(){
+    el.classList.remove('show');
+  }, 2200);
+}
+
+/** 共有ボタン: Web Share API（AirDrop等）→ 未対応時はクリップボードにコピー */
+async function shareHandoverCard(){
+  const text = getHandoverText();
+  if (typeof navigator.share === 'function') {
+    try {
+      await navigator.share({
+        title: '搬送前申し送りカード',
+        text: text,
+      });
+      showToast('共有しました');
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return; // ユーザーがキャンセル
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('コピーしました。メールやチャットに貼り付けて送信できます');
+  } catch (err) {
+    showToast('コピーに失敗しました');
+  }
+}
+
+// ═══════════════════════════════════════════
+//  NPPV TOGGLE
+// ═══════════════════════════════════════════
+function toggleNppvOn(){
+  const badge = document.getElementById('nppvOnBadge');
+  const fields = document.getElementById('nppvOnFields');
+  badge.classList.toggle('on');
+  const isOn = badge.classList.contains('on');
+  fields.style.display = isOn ? 'flex' : 'none';
+  state.nppvOn = isOn;
+}
+
+// ═══════════════════════════════════════════
+//  NPPV ASSESSMENT (called from calcAndGo)
+// ═══════════════════════════════════════════
+function renderNppvAssessment(){
+  const section = document.getElementById('nppvAssessSection');
+  const isOn = document.getElementById('nppvOnBadge').classList.contains('on');
+
+  if(!isOn){
+    section.innerHTML = '';
+    document.getElementById('nppvBridgeCard').style.display = 'none';
+    return;
+  }
+
+  const s = state.signs;
+  const trend = document.getElementById('nppv-trend').value;
+  const duration = parseInt(document.getElementById('nppv-duration').value || 0);
+  const mode = document.getElementById('nppv-mode').value;
+  const setting = document.getElementById('nppv-setting').value;
+  const spo2 = parseFloat(document.getElementById('v-spo2').value);
+
+  // Contraindications to NPPV continuation
+  const contraList = [];
+  if(s.drool)   contraList.push({label:'流涎・嚥下不能', reason:'誤嚥→気道内分泌物急増のリスク'});
+  if(s.secretion) contraList.push({label:'分泌物増多', reason:'マスク換気中の気道閉塞リスク'});
+  if(s.stridor && s.effort) contraList.push({label:'喘鳴＋努力呼吸', reason:'閉塞進行中。NPPVで改善しない'});
+  if(trend === 'worsen' || trend === 'urgent') contraList.push({label:'NPPVでも悪化傾向', reason:'橋渡し限界。次のPlanへ移行を'});
+  if(duration >= 3) contraList.push({label:'6時間以上継続中', reason:'長期NPPVは気道閉塞の進行を隠しうる'});
+  if(!isNaN(spo2) && spo2 < 92) contraList.push({label:`SpO2 ${spo2}%`, reason:'NPPV下でも酸素化不十分'});
+
+  // Suitability factors
+  const suitList = [];
+  if(!s.drool && !s.secretion) suitList.push('分泌物コントロール良好');
+  if(!s.stridor || s.effort) suitList.push('意識清明・協力体制あり');
+  if(trend === 'improve') suitList.push('NPPVで一時改善中');
+  if(mode === 'hfnc') suitList.push('HFNC：マスク不要で快適性高い');
+
+  // Verdict
+  let verdictClass, verdictIcon, verdictTitle, verdictText;
+  if(contraList.length === 0 && trend === 'improve'){
+    verdictClass='ok'; verdictIcon='✅';
+    verdictTitle='NPPV継続：橋渡しとして妥当';
+    verdictText='現時点でNPPV適応の禁忌所見なし。ただし確定的な気道戦略（Plan A）の準備を同時進行してください。悪化徴候が出たら迷わず次のPlanへ移行します。';
+  } else if(contraList.length <= 1 && trend !== 'urgent'){
+    verdictClass='caution'; verdictIcon='⚠️';
+    verdictTitle='NPPV継続：要注意・移行準備を';
+    verdictText='一部に禁忌・懸念因子あり。NPPVを継続しながら気道確保の準備を積極的に進め、移行のトリガーを今すぐチームで共有してください。';
+  } else {
+    verdictClass='ng'; verdictIcon='🛑';
+    verdictTitle='NPPV限界：気道確保に移行すべき';
+    verdictText='複数の禁忌・悪化因子が存在します。NPPVを継続することで気道確保のタイミングを逸する危険があります。今すぐ気道確保戦略（Plan A）に移行してください。';
+  }
+
+  const contraHtml = contraList.length > 0
+    ? `<div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;">
+        ${contraList.map(c=>`
+          <div class="nppv-row">
+            <div class="nppv-dot n">×</div>
+            <div><strong style="color:var(--red)">${c.label}</strong>　<span style="color:var(--t2)">${c.reason}</span></div>
+          </div>`).join('')}
+       </div>` : '';
+
+  const suitHtml = suitList.length > 0
+    ? `<div style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+        ${suitList.map(s=>`
+          <div class="nppv-row">
+            <div class="nppv-dot y">○</div>
+            <div style="color:var(--t2)">${s}</div>
+          </div>`).join('')}
+       </div>` : '';
+
+  const modeLabel = {cpap:'CPAP', bipap:'BiPAP（S/T）', hfnc:'HFNC'}[mode] || mode;
+  const durationLabel = ['30分未満','30分〜2時間','2〜6時間','6時間以上'][duration];
+  const trendLabel = {improve:'改善中 ↑', stable:'変わらず →', worsen:'悪化傾向 ↓', urgent:'急激に悪化 ⚠'}[trend];
+  const trendColor = {improve:'var(--green)', stable:'var(--t2)', worsen:'var(--orange)', urgent:'var(--red)'}[trend];
+
+  section.innerHTML = `
+    <div class="section-label" style="margin-top:4px;">💜 NPPV評価</div>
+    <div class="nppv-card flash-in">
+      <div class="nppv-head">
+        <div class="nppv-tag">NPPV ON</div>
+        <div class="nppv-head-title">現在NPPV管理中</div>
+        <div style="margin-left:auto;font-size:11px;color:var(--t2)">${modeLabel}　${setting||'—'}　${durationLabel}</div>
+      </div>
+      <div class="nppv-body">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:12px;color:var(--t2)">NPPVでの推移：</span>
+          <strong style="font-size:13px;color:${trendColor}">${trendLabel}</strong>
+        </div>
+
+        <div class="nppv-verdict ${verdictClass}">
+          <div class="nv-icon">${verdictIcon}</div>
+          <div>
+            <div class="nv-title ${verdictClass}">${verdictTitle}</div>
+            <div class="nv-text">${verdictText}</div>
+          </div>
+        </div>
+
+        ${contraList.length > 0 ? `<div><div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:2px;">禁忌・懸念因子</div>${contraHtml}</div>` : ''}
+        ${suitList.length > 0 ? `<div><div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:2px;">継続支持因子</div>${suitHtml}</div>` : ''}
+
+        <div class="nppv-trap">
+          <div class="nppv-trap-title">📊 NPPV継続中の観察ポイント</div>
+          <div class="nppv-trap-text">下記のいずれかが出現したら<strong style="color:var(--red)">即座にPlan A（確定的気道確保）へ移行</strong></div>
+          <div class="nppv-trap-signs">
+            <span class="nppv-trap-sign">FiO2要求↑</span>
+            <span class="nppv-trap-sign">RR増加</span>
+            <span class="nppv-trap-sign">努力呼吸増強</span>
+            <span class="nppv-trap-sign">意識レベル低下</span>
+            <span class="nppv-trap-sign">SpO2下降傾向</span>
+            <span class="nppv-trap-sign">マスク外れ頻回</span>
+            <span class="nppv-trap-sign">分泌物急増</span>
+            <span class="nppv-trap-sign">Stridor出現</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // Show bridge card in Plan panel
+  document.getElementById('nppvBridgeCard').style.display = 'block';
+}
+
+// ═══════════════════════════════════════════
+//  ダイヤル（ドクターカー仕様・ボトムシート）
+// ═══════════════════════════════════════════
+let dialCallback = null;
+let dialWheels = [];
+let scrollPosition = 0;
+
+function genRange(from, to, step){
+  const arr = [];
+  for(let i = from; i <= to; i = parseFloat((i + step).toFixed(2))){
+    arr.push({ label: String(i), value: i });
+  }
+  return arr;
+}
+
+function updateDialSelection(scroll, index){
+  scroll.querySelectorAll('.dial-option').forEach((o, i)=>{
+    o.classList.toggle('selected', i === index);
+  });
+  const wi = parseInt(scroll.dataset.wheelIndex, 10);
+  if(dialWheels[wi] && dialWheels[wi].options[index]) dialWheels[wi].selected = dialWheels[wi].options[index].value;
+}
+
+function openDial(title, wheels, callback){
+  scrollPosition = window.pageYOffset;
+  document.body.classList.add('dial-open');
+  dialCallback = callback;
+  dialWheels = wheels;
+  document.getElementById('dialTitle').textContent = title;
+  const body = document.getElementById('dialBody');
+  body.innerHTML = '';
+  const optionHeight = 40;
+
+  wheels.forEach((w, wi)=>{
+    const wheel = document.createElement('div');
+    wheel.className = 'dial-wheel';
+    wheel.innerHTML = '<div class="dial-highlight"></div>';
+    const scroll = document.createElement('div');
+    scroll.className = 'dial-scroll';
+    scroll.dataset.wheelIndex = wi;
+    w.options.forEach((opt, oi)=>{
+      const div = document.createElement('div');
+      div.className = 'dial-option';
+      div.textContent = opt.label !== undefined ? opt.label : opt.value;
+      div.dataset.value = opt.value;
+      if(String(opt.value) === String(w.selected)) div.classList.add('selected');
+      scroll.appendChild(div);
+    });
+    wheel.appendChild(scroll);
+    body.appendChild(wheel);
+    if(w.unit){
+      const unit = document.createElement('div');
+      unit.className = 'dial-unit';
+      unit.textContent = w.unit;
+      body.appendChild(unit);
+    }
+    let currentIndex = w.options.findIndex(o => String(o.value) === String(w.selected));
+    if(currentIndex < 0){ currentIndex = 0; if(w.options.length) w.selected = w.options[0].value; }
+    let currentOffset = -currentIndex * optionHeight;
+    let velocityY = 0, lastY = 0, lastTime = 0;
+    let animationId = null;
+    const stopAnimation = ()=>{ if(animationId){ cancelAnimationFrame(animationId); animationId = null; } };
+    const snapToNearest = ()=>{
+      let newIndex = Math.round(-currentOffset / optionHeight);
+      newIndex = Math.max(0, Math.min(w.options.length - 1, newIndex));
+      currentOffset = -newIndex * optionHeight;
+      currentIndex = newIndex;
+      if(w.options[newIndex]) w.selected = w.options[newIndex].value;
+      scroll.style.transition = 'transform 0.2s ease-out';
+      scroll.style.transform = 'translateY(' + currentOffset + 'px)';
+      updateDialSelection(scroll, newIndex);
+    };
+    const momentumScroll = ()=>{
+      velocityY *= 0.92;
+      currentOffset += velocityY;
+      const minOff = -(w.options.length - 1) * optionHeight;
+      if(currentOffset > 0){ currentOffset = 0; velocityY = 0; }
+      else if(currentOffset < minOff){ currentOffset = minOff; velocityY = 0; }
+      scroll.style.transform = 'translateY(' + currentOffset + 'px)';
+      if(Math.abs(velocityY) > 0.5) requestAnimationFrame(momentumScroll);
+      else snapToNearest();
+    };
+    scroll.addEventListener('touchstart', e=>{ e.preventDefault(); stopAnimation(); scroll.style.transition = 'none'; lastY = e.touches[0].clientY; lastTime = Date.now(); velocityY = 0; }, {passive: false});
+    scroll.addEventListener('touchmove', e=>{
+      e.preventDefault();
+      const y = e.touches[0].clientY, dy = y - lastY;
+      currentOffset += dy * 1.5;
+      scroll.style.transform = 'translateY(' + currentOffset + 'px)';
+      const dt = Date.now() - lastTime;
+      if(dt > 0) velocityY = (dy * 1.5) / dt * 16;
+      lastY = y; lastTime = Date.now();
+    }, {passive: false});
+    scroll.addEventListener('touchend', e=>{ e.preventDefault(); if(Math.abs(velocityY) > 2) requestAnimationFrame(momentumScroll); else snapToNearest(); }, {passive: false});
+    let isMouseDown = false;
+    scroll.addEventListener('mousedown', e=>{ e.preventDefault(); isMouseDown = true; stopAnimation(); scroll.style.transition = 'none'; lastY = e.clientY; lastTime = Date.now(); velocityY = 0; });
+    document.addEventListener('mousemove', e=>{
+      if(!isMouseDown) return;
+      const dy = e.clientY - lastY;
+      currentOffset += dy * 1.5;
+      scroll.style.transform = 'translateY(' + currentOffset + 'px)';
+      const dt = Date.now() - lastTime;
+      if(dt > 0) velocityY = (dy * 1.5) / dt * 16;
+      lastY = e.clientY; lastTime = Date.now();
+    });
+    document.addEventListener('mouseup', ()=>{ if(!isMouseDown) return; isMouseDown = false; if(Math.abs(velocityY) > 2) requestAnimationFrame(momentumScroll); else snapToNearest(); });
+    wheel.addEventListener('wheel', e=>{ e.preventDefault(); stopAnimation(); scroll.style.transition = 'none'; currentOffset -= e.deltaY * 0.5; currentOffset = Math.max(-(w.options.length - 1) * optionHeight, Math.min(0, currentOffset)); scroll.style.transform = 'translateY(' + currentOffset + 'px)'; clearTimeout(wheel._st); wheel._st = setTimeout(snapToNearest, 150); }, {passive: false});
+    scroll.querySelectorAll('.dial-option').forEach((opt, oi)=>{
+      opt.addEventListener('click', e=>{ e.stopPropagation(); currentIndex = oi; currentOffset = -oi * optionHeight; w.selected = w.options[oi].value; scroll.style.transition = 'transform 0.2s ease-out'; scroll.style.transform = 'translateY(' + currentOffset + 'px)'; updateDialSelection(scroll, oi); if(dialWheels.length === 1) setTimeout(confirmDial, 200); });
+    });
+    scroll.style.transform = 'translateY(' + currentOffset + 'px)';
+    updateDialSelection(scroll, currentIndex);
+  });
+  document.getElementById('dialOverlay').classList.add('show');
+  document.getElementById('dialOverlay').ontouchmove = e=> e.preventDefault();
+}
+
+function closeDial(e){
+  if(e && e.target !== document.getElementById('dialOverlay')) return;
+  document.getElementById('dialOverlay').classList.remove('show');
+  document.body.classList.remove('dial-open');
+  window.scrollTo(0, scrollPosition);
+}
+
+function confirmDial(){
+  if(dialCallback){ const values = dialWheels.map(w => w.selected); dialCallback(values); }
+  document.getElementById('dialOverlay').classList.remove('show');
+  document.body.classList.remove('dial-open');
+  window.scrollTo(0, scrollPosition);
+}
+
+function openAgeDial(){
+  const input = document.getElementById('f-age');
+  const display = document.getElementById('f-age-display');
+  const current = input && input.value !== '' ? parseInt(input.value, 10) : 0;
+  const options = genRange(0, 120, 1);
+  openDial('年齢', [{ options, selected: (current >= 0 && current <= 120) ? current : 0, unit: '歳' }], vals=>{
+    const v = vals[0];
+    if(input) input.value = (v !== 0) ? String(v) : '';
+    if(display) display.textContent = (v !== 0 && v !== undefined) ? v : '—';
+  });
+}
+
+function openSpo2Dial(){
+  const input = document.getElementById('v-spo2');
+  const display = document.getElementById('v-spo2-display');
+  const current = input && input.value !== '' ? parseInt(input.value, 10) : 98;
+  openDial('SpO2', [{ options: genRange(50, 100, 1), selected: current, unit: '%' }], vals=>{
+    const v = vals[0];
+    if(input) input.value = String(v);
+    if(display) display.textContent = v;
+    if(typeof onVitalInput === 'function') onVitalInput(input);
+  });
+}
+
+function openHrDial(){
+  const input = document.getElementById('v-hr');
+  const display = document.getElementById('v-hr-display');
+  const current = input && input.value !== '' ? parseInt(input.value, 10) : 80;
+  openDial('心拍数', [{ options: genRange(40, 200, 1), selected: current, unit: '/min' }], vals=>{
+    const v = vals[0];
+    if(input) input.value = String(v);
+    if(display) display.textContent = v;
+    if(typeof onVitalInput === 'function') onVitalInput(input);
+  });
+}
+
+function openRrDial(){
+  const input = document.getElementById('v-rr');
+  const display = document.getElementById('v-rr-display');
+  const current = input && input.value !== '' ? parseInt(input.value, 10) : 16;
+  openDial('呼吸数', [{ options: genRange(0, 50, 1), selected: current, unit: '/min' }], vals=>{
+    const v = vals[0];
+    if(input) input.value = String(v);
+    if(display) display.textContent = v;
+    if(typeof onVitalInput === 'function') onVitalInput(input);
+  });
+}
+
+function openBpDial(){
+  const input = document.getElementById('v-bp');
+  const display = document.getElementById('v-bp-display');
+  const parts = (input && input.value) ? String(input.value).split('/') : ['120','80'];
+  const sbp = parseInt(parts[0], 10) || 120, dbp = parseInt(parts[1], 10) || 80;
+  openDial('血圧', [
+    { options: genRange(60, 250, 1), selected: sbp, unit: '/' },
+    { options: genRange(30, 150, 1), selected: dbp, unit: 'mmHg' }
+  ], vals=>{
+    const s = vals[0], d = vals[1];
+    if(input) input.value = s + '/' + d;
+    if(display) display.textContent = s + '/' + d;
+  });
+}
+
+// ═══════════════════════════════════════════
+//  RESET
+// ═══════════════════════════════════════════
+function resetAll(){
+  if(!confirm('症例をリセットして最初に戻りますか？')) return;
+
+  // Clear signs
+  document.querySelectorAll('.check-item').forEach(el=>{
+    el.classList.remove('active');
+  });
+  state.signs = {};
+  state.score = 0;
+  state.level = 0;
+
+  // Clear inputs
+  ['f-age','v-spo2','v-hr','v-rr','v-bp','planA','planB','planC','planD',
+   'nppv-setting'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  document.getElementById('f-sex').value = '';
+  document.getElementById('f-dist').value = '0';
+  document.getElementById('f-time').value = '0';
+  document.getElementById('f-specialist').value = '0';
+  document.getElementById('nppv-mode').value = 'cpap';
+  document.getElementById('nppv-duration').value = '0';
+  document.getElementById('nppv-trend').value = 'improve';
+
+  // Reset NPPV badge
+  const badge = document.getElementById('nppvOnBadge');
+  badge.classList.remove('on');
+  document.getElementById('nppvOnFields').style.display = 'none';
+  document.getElementById('nppvAssessSection').innerHTML = '';
+  document.getElementById('nppvBridgeCard').style.display = 'none';
+  state.nppvOn = false;
+
+  // Clear role chips
+  document.querySelectorAll('.role-chip').forEach(c=>c.classList.remove('on'));
+
+  // Clear plan textareas auto-filled class
+  document.querySelectorAll('.plan-textarea').forEach(t=>t.classList.remove('auto-filled'));
+
+  // Reset vital field coloring
+  ['vf-spo2','vf-hr','vf-rr'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('warn','crit');
+  });
+  document.getElementById('v-spo2').classList.remove('warn-val','crit-val');
+
+  // 年齢・バイタル表示をデフォルトに
+  const fAge = document.getElementById('f-age');
+  const fAgeD = document.getElementById('f-age-display');
+  if(fAge) fAge.value = '';
+  if(fAgeD) fAgeD.textContent = '—';
+  const vSpo2 = document.getElementById('v-spo2');
+  const vSpo2D = document.getElementById('v-spo2-display');
+  if(vSpo2) vSpo2.value = '98';
+  if(vSpo2D) vSpo2D.textContent = '98';
+  const vHr = document.getElementById('v-hr');
+  const vHrD = document.getElementById('v-hr-display');
+  if(vHr) vHr.value = '80';
+  if(vHrD) vHrD.textContent = '80';
+  const vRr = document.getElementById('v-rr');
+  const vRrD = document.getElementById('v-rr-display');
+  if(vRr) vRr.value = '16';
+  if(vRrD) vRrD.textContent = '16';
+  const vBp = document.getElementById('v-bp');
+  const vBpD = document.getElementById('v-bp-display');
+  if(vBp) vBp.value = '120/80';
+  if(vBpD) vBpD.textContent = '120/80';
+  if(typeof onVitalInput === 'function'){
+    onVitalInput(document.getElementById('v-spo2'));
+    onVitalInput(document.getElementById('v-hr'));
+    onVitalInput(document.getElementById('v-rr'));
+  }
+
+  updateMiniMeter();
+  goStep(0);
+}
+
+// init
+updateMiniMeter();
+
+// PWA: 更新（キャッシュ削除・再読込）
+function updateApp() {
+  if (!confirm('アプリを最新版に更新しますか？\n（キャッシュを削除して再読み込みします）')) return;
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      regs.forEach((r) => r.unregister());
+    });
+  }
+  if ('caches' in window) {
+    caches.keys().then((names) => { names.forEach((n) => caches.delete(n)); });
+  }
+  setTimeout(() => window.location.reload(true), 500);
+}
+
+// PWA: Service Worker 登録
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {});
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airway Icon — Concept B Refined</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #07090f;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    font-family: 'DM Mono', monospace;
+    color: #e0e0e8;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #fff;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  .subtitle {
+    font-size: 11px;
+    color: #444;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 56px;
+  }
+
+  .stage {
+    display: flex;
+    gap: 56px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 48px;
+  }
+
+  .size-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .icon-wrap {
+    border-radius: 22.4%;
+    overflow: hidden;
+    box-shadow: 0 12px 48px rgba(0,60,180,0.25), 0 2px 8px rgba(0,0,0,0.8);
+  }
+
+  .size-label {
+    font-size: 10px;
+    color: #333;
+    letter-spacing: 0.12em;
+  }
+
+  /* anatomy label panel */
+  .anatomy {
+    margin-top: 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 32px;
+    max-width: 400px;
+    border: 1px solid #111;
+    padding: 20px 24px;
+    border-radius: 8px;
+  }
+  .anatomy-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #555;
+    letter-spacing: 0.06em;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.85; transform: scale(1); }
+    50%       { opacity: 1;    transform: scale(1.012); }
+  }
+  @keyframes glow-pulse {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(255,210,80,0.5)); }
+    50%       { filter: drop-shadow(0 0 18px rgba(255,210,80,0.9)); }
+  }
+  .breathe { animation: breathe 3.2s ease-in-out infinite; transform-origin: center; }
+  .light-glow { animation: glow-pulse 2.4s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<h1>CONCEPT B — REVISED</h1>
+<p class="subtitle">Laryngoscopy POV · Anatomical Icon</p>
+
+<div class="stage">
+
+  <!-- 512 / hero -->
+  <div class="size-block">
+    <div class="icon-wrap" style="width:240px;height:240px;">
+      <svg width="240" height="240" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Deep laryngeal background -->
+          <radialGradient id="bg512" cx="50%" cy="42%">
+            <stop offset="0%"   stop-color="#0e2258"/>
+            <stop offset="65%"  stop-color="#071438"/>
+            <stop offset="100%" stop-color="#030a20"/>
+          </radialGradient>
+          <!-- Mucosa warm tone -->
+          <linearGradient id="mucosa" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#c06040"/>
+            <stop offset="100%" stop-color="#7a2c18"/>
+          </linearGradient>
+          <!-- Vocal cord pearl white -->
+          <linearGradient id="cord" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#e8f0ff"/>
+            <stop offset="100%" stop-color="#a0b8e0"/>
+          </linearGradient>
+          <!-- Trachea dark -->
+          <radialGradient id="trachea" cx="50%" cy="50%">
+            <stop offset="0%"   stop-color="#020818"/>
+            <stop offset="100%" stop-color="#050e28"/>
+          </radialGradient>
+          <!-- Laryngoscope light beam -->
+          <radialGradient id="beam" cx="50%" cy="0%">
+            <stop offset="0%"   stop-color="#ffe87a" stop-opacity="0.55"/>
+            <stop offset="100%" stop-color="#ffe87a" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Aryepiglottic fold gradient -->
+          <linearGradient id="aefold" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%"   stop-color="#9a3a22"/>
+            <stop offset="100%" stop-color="#5a1a0a"/>
+          </linearGradient>
+          <!-- Inner shadow ring -->
+          <radialGradient id="innerShadow" cx="50%" cy="50%">
+            <stop offset="60%"  stop-color="#000000" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#000000" stop-opacity="0.55"/>
+          </radialGradient>
+        </defs>
+
+        <!-- App background -->
+        <rect width="200" height="200" rx="44" fill="url(#bg512)"/>
+
+        <!-- Laryngoscope light beam (diffuse top-down) -->
+        <ellipse cx="100" cy="58" rx="60" ry="72" fill="url(#beam)"/>
+
+        <!-- ===== PHARYNGEAL WALLS (outer rim) ===== -->
+        <!-- Posterior pharyngeal wall - arc at bottom -->
+        <path d="M28 128 Q42 160 100 168 Q158 160 172 128" fill="#6a2a14" opacity="0.7"/>
+        <!-- Lateral pharyngeal walls -->
+        <path d="M28 128 Q26 90 46 66 Q54 58 64 55" stroke="#7a3020" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M172 128 Q174 90 154 66 Q146 58 136 55" stroke="#7a3020" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+        <!-- ===== EPIGLOTTIS (anterior, top) ===== -->
+        <!-- Epiglottis is the curved lid/flap at the top -->
+        <path class="breathe"
+              d="M62 60
+                 Q72 38 100 34
+                 Q128 38 138 60
+                 Q118 54 100 52
+                 Q82 54 62 60 Z"
+              fill="url(#mucosa)" opacity="0.95"/>
+        <!-- Epiglottis fold line (midrib) -->
+        <path d="M100 34 Q100 44 100 52" stroke="#c06040" stroke-width="1.5" fill="none" opacity="0.5"/>
+        <!-- Epiglottis rim highlight -->
+        <path d="M68 58 Q84 50 100 48 Q116 50 132 58" stroke="#e07050" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>
+
+        <!-- ===== ARYEPIGLOTTIC FOLDS (sides, connecting epiglottis to arytenoids) ===== -->
+        <path d="M62 60 Q48 82 52 108 Q54 116 62 120" 
+              fill="url(#aefold)" opacity="0.9"/>
+        <path d="M138 60 Q152 82 148 108 Q146 116 138 120" 
+              fill="url(#aefold)" opacity="0.9"/>
+        <!-- AE fold inner edge highlight -->
+        <path d="M63 61 Q50 84 54 110" stroke="#b05030" stroke-width="1.5" fill="none" opacity="0.5"/>
+        <path d="M137 61 Q150 84 146 110" stroke="#b05030" stroke-width="1.5" fill="none" opacity="0.5"/>
+
+        <!-- ===== ARYTENOID CARTILAGES (posterior pair) ===== -->
+        <!-- Left arytenoid -->
+        <ellipse cx="74" cy="118" rx="16" ry="11" fill="#8a3822" transform="rotate(-10,74,118)"/>
+        <ellipse cx="74" cy="116" rx="10" ry="7"  fill="#a04828" transform="rotate(-10,74,118)"/>
+        <!-- Right arytenoid -->
+        <ellipse cx="126" cy="118" rx="16" ry="11" fill="#8a3822" transform="rotate(10,126,118)"/>
+        <ellipse cx="126" cy="116" rx="10" ry="7"  fill="#a04828" transform="rotate(10,126,118)"/>
+        <!-- Interarytenoid notch -->
+        <path d="M84 122 Q100 126 116 122" stroke="#5a1a0a" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+        <!-- ===== GLOTTIC OPENING (the dark space between cords) ===== -->
+        <!-- Diamond/kite shape: anterior commissure (top) to posterior commissure (between arytenoids) -->
+        <path d="M100 60
+                 Q78 80  70 105
+                 Q82 120 100 118
+                 Q118 120 130 105
+                 Q122 80  100 60 Z"
+              fill="url(#trachea)"/>
+
+        <!-- ===== TRUE VOCAL CORDS ===== -->
+        <!-- Left vocal cord -->
+        <path class="breathe"
+              d="M100 60 Q82 78 70 105 Q80 112 100 110 Z"
+              fill="url(#cord)" opacity="0.95"/>
+        <!-- Right vocal cord -->
+        <path class="breathe"
+              d="M100 60 Q118 78 130 105 Q120 112 100 110 Z"
+              fill="url(#cord)" opacity="0.95"/>
+        <!-- Cord medial edge (fine line) -->
+        <path d="M100 60 Q82 80 70 106" stroke="#c8daf8" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+        <path d="M100 60 Q118 80 130 106" stroke="#c8daf8" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+        <!-- Anterior commissure point -->
+        <circle cx="100" cy="60" r="3" fill="#deeaff" opacity="0.7"/>
+
+        <!-- ===== TRACHEAL RINGS (subglottic, seen through open cords) ===== -->
+        <ellipse cx="100" cy="128" rx="14" ry="5"  fill="none" stroke="#1a3a7a" stroke-width="2"   opacity="0.8"/>
+        <ellipse cx="100" cy="140" rx="10" ry="3.5" fill="none" stroke="#1a3a7a" stroke-width="1.5" opacity="0.5"/>
+        <ellipse cx="100" cy="150" rx="7"  ry="2.5" fill="none" stroke="#1a3a7a" stroke-width="1"   opacity="0.3"/>
+
+        <!-- ===== LARYNGOSCOPE BLADE (top, partial) ===== -->
+        <!-- Blade body -->
+        <rect x="88" y="14" width="24" height="36" rx="6" fill="#b8cce8" opacity="0.7"/>
+        <!-- Blade channel groove -->
+        <rect x="94" y="16" width="5" height="32" rx="2" fill="#6a8ab8" opacity="0.5"/>
+        <!-- Light tip on blade -->
+        <circle class="light-glow" cx="100" cy="48" r="8" fill="#ffe87a"/>
+        <circle cx="100" cy="48" r="4" fill="#fff5b0"/>
+        <!-- Blade handle hint -->
+        <rect x="94" y="14" width="12" height="6" rx="3" fill="#8aaccc" opacity="0.5"/>
+
+        <!-- Inner vignette -->
+        <rect width="200" height="200" rx="44" fill="url(#innerShadow)"/>
+      </svg>
+    </div>
+    <div class="size-label">240px (hero)</div>
+  </div>
+
+  <!-- 128px -->
+  <div class="size-block">
+    <div class="icon-wrap" style="width:128px;height:128px;">
+      <svg width="128" height="128" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="bg128" cx="50%" cy="42%">
+            <stop offset="0%" stop-color="#0e2258"/>
+            <stop offset="100%" stop-color="#030a20"/>
+          </radialGradient>
+          <linearGradient id="cord128" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#e8f0ff"/>
+            <stop offset="100%" stop-color="#a0b8e0"/>
+          </linearGradient>
+        </defs>
+        <rect width="200" height="200" rx="44" fill="url(#bg128)"/>
+        <ellipse cx="100" cy="58" rx="60" ry="72" fill="#ffe87a" opacity="0.12"/>
+        <!-- AE folds -->
+        <path d="M62 60 Q48 82 52 108 Q54 116 62 120" fill="#7a2c18" opacity="0.9"/>
+        <path d="M138 60 Q152 82 148 108 Q146 116 138 120" fill="#7a2c18" opacity="0.9"/>
+        <!-- Epiglottis -->
+        <path d="M62 60 Q72 38 100 34 Q128 38 138 60 Q118 54 100 52 Q82 54 62 60 Z" fill="#c06040"/>
+        <!-- Arytenoids -->
+        <ellipse cx="74"  cy="118" rx="16" ry="11" fill="#7a2a18" transform="rotate(-10,74,118)"/>
+        <ellipse cx="126" cy="118" rx="16" ry="11" fill="#7a2a18" transform="rotate(10,126,118)"/>
+        <!-- Glottis dark -->
+        <path d="M100 60 Q78 80 70 105 Q82 120 100 118 Q118 120 130 105 Q122 80 100 60 Z" fill="#020818"/>
+        <!-- Vocal cords -->
+        <path d="M100 60 Q82 78 70 105 Q80 112 100 110 Z" fill="url(#cord128)"/>
+        <path d="M100 60 Q118 78 130 105 Q120 112 100 110 Z" fill="url(#cord128)"/>
+        <!-- Tracheal rings -->
+        <ellipse cx="100" cy="128" rx="14" ry="5" fill="none" stroke="#1a3a7a" stroke-width="2" opacity="0.8"/>
+        <ellipse cx="100" cy="140" rx="10" ry="3.5" fill="none" stroke="#1a3a7a" stroke-width="1.5" opacity="0.4"/>
+        <!-- Blade + light -->
+        <rect x="88" y="14" width="24" height="36" rx="6" fill="#b8cce8" opacity="0.7"/>
+        <circle cx="100" cy="48" r="8" fill="#ffe87a"/>
+        <circle cx="100" cy="48" r="4" fill="#fff5b0"/>
+      </svg>
+    </div>
+    <div class="size-label">128px</div>
+  </div>
+
+  <!-- 64px -->
+  <div class="size-block">
+    <div class="icon-wrap" style="width:64px;height:64px;">
+      <svg width="64" height="64" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" rx="44" fill="#071438"/>
+        <!-- Epiglottis simplified -->
+        <path d="M60 62 Q72 36 100 32 Q128 36 140 62 Q118 54 100 52 Q82 54 60 62 Z" fill="#c06040"/>
+        <!-- AE folds -->
+        <path d="M60 62 Q46 86 52 114 Q54 120 64 122" fill="#7a2c18"/>
+        <path d="M140 62 Q154 86 148 114 Q146 120 136 122" fill="#7a2c18"/>
+        <!-- Glottis -->
+        <path d="M100 62 Q76 82 68 108 Q82 122 100 120 Q118 122 132 108 Q124 82 100 62 Z" fill="#020818"/>
+        <!-- Vocal cords -->
+        <path d="M100 62 Q78 82 68 108 Q80 114 100 112 Z" fill="#c8daf8"/>
+        <path d="M100 62 Q122 82 132 108 Q120 114 100 112 Z" fill="#c8daf8"/>
+        <!-- Tracheal ring -->
+        <ellipse cx="100" cy="130" rx="14" ry="5" fill="none" stroke="#1a3a7a" stroke-width="2.5" opacity="0.9"/>
+        <!-- Light source only (no blade at small size) -->
+        <circle cx="100" cy="46" r="10" fill="#ffe87a" opacity="0.9"/>
+        <circle cx="100" cy="46" r="5" fill="#fff5b0"/>
+      </svg>
+    </div>
+    <div class="size-label">64px</div>
+  </div>
+
+  <!-- 32px -->
+  <div class="size-block">
+    <div class="icon-wrap" style="width:32px;height:32px;">
+      <svg width="32" height="32" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" rx="44" fill="#071438"/>
+        <!-- Epiglottis arch -->
+        <path d="M55 68 Q70 34 100 30 Q130 34 145 68 Q120 56 100 54 Q80 56 55 68 Z" fill="#c06040"/>
+        <!-- Glottis + cords simplified -->
+        <path d="M100 68 Q74 88 66 116 Q82 128 100 126 Q118 128 134 116 Q126 88 100 68 Z" fill="#020818"/>
+        <path d="M100 68 Q76 90 66 116 Q80 120 100 118 Z" fill="#d0e4ff"/>
+        <path d="M100 68 Q124 90 134 116 Q120 120 100 118 Z" fill="#d0e4ff"/>
+        <!-- Trachea ring -->
+        <ellipse cx="100" cy="136" rx="16" ry="6" fill="none" stroke="#2a4a9a" stroke-width="3" opacity="0.8"/>
+        <!-- Light -->
+        <circle cx="100" cy="44" r="14" fill="#ffe87a" opacity="0.9"/>
+        <circle cx="100" cy="44" r="7" fill="#fff8d0"/>
+      </svg>
+    </div>
+    <div class="size-label">32px</div>
+  </div>
+
+</div>
+
+<!-- Anatomy key -->
+<div class="anatomy">
+  <div class="anatomy-row"><span class="dot" style="background:#c06040"></span>epiglottis</div>
+  <div class="anatomy-row"><span class="dot" style="background:#7a2c18"></span>aryepiglottic fold</div>
+  <div class="anatomy-row"><span class="dot" style="background:#c8daf8"></span>true vocal cord</div>
+  <div class="anatomy-row"><span class="dot" style="background:#8a3822"></span>arytenoid cartilage</div>
+  <div class="anatomy-row"><span class="dot" style="background:#020818"></span>glottic opening</div>
+  <div class="anatomy-row"><span class="dot" style="background:#1a3a7a"></span>tracheal rings</div>
+  <div class="anatomy-row"><span class="dot" style="background:#b8cce8"></span>laryngoscope blade</div>
+  <div class="anatomy-row"><span class="dot" style="background:#ffe87a"></span>light source</div>
+</div>
+
+</body>
+</html>
