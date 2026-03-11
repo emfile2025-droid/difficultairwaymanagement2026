@@ -3,7 +3,7 @@
 const CACHE_NAME = 'airway-guard-v1';
 const URLS = [
   './',
-  './airway_guard_v2_1.html',
+  './index.html',
   './manifest.json'
 ];
 
